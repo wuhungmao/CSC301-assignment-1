@@ -1,0 +1,258 @@
+Title: Microservices Architecture in Java
+
+Objective:
+The objective of this assignment is to design and implement a microservices-based system in Java that can be deployed and tested locally or within the same Local Area Network (LAN). Students will create three interconnected microservices that work together to achieve a specific functionality.
+
+Learning Outcomes:
+- API development and communication
+- Microservice architecture
+- Exensible design
+- Distributed system development
+- time management and multiple overlapping deadlines
+
+Important:
+- Your submission must include a README.txt which specifies how to compile your code, and how to run it. 
+(Perhaps a readme with "Please run this particular script for compilation"). 
+- Your submission must include all files required to compile the assignment code.
+- Your submission must compile and run on the lab machines without installation of any additional libraries or software or other components.
+- Your submission must inlcude a single shell script runme.sh 
+-- ./runme.sh -c  --> which when run by the TAs, compiles all your code. 
+-- ./runme.sh -u  --> starts the User service
+-- ./runme.sh -p  --> starts the Product service
+-- ./runme.sh -i  --> starts the ISCS
+-- ./runme.sh -o  --> starts the Order service
+-- ./runme.sh -w workloadfile --> starts the workload parser on the same machine as the order service
+
+
+WorkloadParser:
+A parser which reads a given workload file (samples are provided).
+You are encouraged to modify this workload file for your own testing.
+The workload parser makes an HTTP request to the OrderService using the exact API as specified 
+for the User and Product service. See architecture.png for a conceptual visualization.
+Note: This can be written in any programming language as long as it runs on the labs without needing to install anything.
+
+
+
+User Service:
+This must be written in Java and must be started with the following command: "java UserService config.json"
+Implement a user microservice responsible for user management.
+Users should have attributes such as id, username, email, and password.
+Provide endpoints for user creation, retrieval, updating, and deletion.
+API endpoint: /user
+POST Methods: 
+{
+    "command": "create",
+    "id": 23823,
+    "username": "username-32843hnksjn4398",
+    "email": "foo@bar.com",
+    "password": "34289nkjni3w4u"
+}
+==> Creates an entry in the DB for a user. 
+
+{
+    "command": "update",
+    "id": 23823,
+    "username": "username-32843hnksjn4398",
+    "email": "foo@foobar.com",
+    "password": "34289nkjni3w4u"
+}
+==> Updates user with id 23823
+--> Updates all fields that are present (username, email, password); 
+--> If fields are missing, only update the fields that are present. 
+(e.g., if no "password" is transmitted, then only update the username and email).
+
+
+{
+    "command": "delete",
+    "id": 23823,
+    "username": "username-32843hnksjn4398",
+    "email": "foo@bar.com",
+    "password": "34289nkjni3w4u"
+}
+==> delete this user ONLY IFF all fields (username, email and password) correspond. 
+
+GET Methods:
+/user/23823
+==> 
+returns the following JSON in the response body. 
+{
+    "id": 23823,
+    "username": "username-32843hnksjn4398",
+    "email": "foo@bar.com",
+}
+
+
+Product Service:
+This must be written in Java.
+Implement a product microservice responsible for managing products in an e-commerce system.
+Products should have attributes such as id, name, description, price, and quantity in stock.
+Provide endpoints for product creation, updating, info, and deletion.
+API endpoint: /product
+POST Methods: 
+{
+    "command": "create/update/delete",
+    "id": 23823,
+    "productname": "productname-32843hnksjn4398",
+    "price": 3.99 ,
+    "quantity": 9
+}
+==> Creates update, delete work identical to the methods for /user. 
+
+GET method: 
+/product/23823
+if the product with this ID exists, service will return the following JSON in the response body 
+{
+    "id": 23823,
+    "productname": "productname-32843hnksjn4398",
+    "price": 3.99 ,
+    "quantity": 9
+}
+
+
+Order Service:
+This must be written in Java
+This is the service's public facing endpoint. It is used to 
+create users and products, but also to handle orders. 
+
+Implement an order microservice responsible for handling customer orders.
+An order should have attributes such as id, user_id, product_id, quantity, and order_date.
+All endpoints on this service are: 
+/order Provide endpoints for order creation, retrieval, and cancellation.
+/user Provide endpoints for user functionality
+/product Provide endpoints for product functionality
+
+/order POST API (for A1)
+{
+    "command": "place order",
+    "user_id": 1,
+    "product_id": 2,
+    "quantity": 3
+}
+
+==> if the product and the user exists and has a quantity of >= this quantity in stock, then quantity in DB is reduced
+by this quantity and success is returned.
+
+All communication from OrderService MUST go to ISCS which will route and load balance the requests.
+
+Note: this means that to place an order, you may have to first make a GET request, then an "update order" POST request.
+
+
+Inter-service Communication Service:
+This can be written in any language.
+Use RESTful APIs for communication between microservices.
+Implement error handling and appropriate status codes for API responses.
+Utilize appropriate data formats for communication (e.g., JSON).
+Provide configuration settings for microservices to communicate within the same LAN.
+Implement load balancing for distributing requests among instances of microservices.
+Why is this service needed? 
+To pre-plan the ability to scale up for A2 and to pre-plan for additional features.
+Think of this service as something that the order service sends data to; then this
+ISCS, inspects the payload (or has its own API endpoints) and just constructs/forwards
+the payload to the correct microservice.
+(Thought: Could you use this for caching too to speed up and increase
+ your system's transactions per second?)
+
+
+
+Compilation and startup:
+
+Your shell needs to start the services with these commands.
+
+1) java ISCS config.json (or python3 ISCS.py config.json, etc.)
+2) java UserService config.json
+3) java ProductService config.json
+4) java OrderService config.json
+
+Note that if you choose to store data in a DB, your script must also start the DB's associated 
+with the User and Product services. 
+Place any relevant DB files in the same directory as UserService and/or OrderService.
+
+Sample ConfigFile:
+{
+  "UserService": {
+        "port": 14001,
+        "ip": "127.0.0.1"
+    }   ,
+    "OrderService": {
+        "port": 14000,
+        "ip": "142.1.46.48"
+    }   ,
+    "ProductService": {
+        "port": 15000,
+        "ip": "142.1.46.49"
+    }   ,
+    "InterServiceCommunication": {
+        "port": 14000,
+        "ip": "127.0.0.1"
+    }   
+}
+
+
+Note that all servers should be standalone (i.e., during testing the TAs should be able to start the UserService
+and send API requests directly to it). 
+
+
+Important: Approximately 1 week before the DUE date, an additional requirement is going to be released. 
+    This requirement pertains to persistence (i.e., after a "shutdown" of all your code, a restart should contain the same information as before the restart; but also a command will be added to wipe all previous records). You will receive details a week before, much like in real life last minute changing requirements, however, since you are still "learning", consider this^ a hint so you can prepare a little bit.
+
+Submission and grading:
+
+Submit the following directory structure (due to how markus works, submit a zip file and check the checkbox "unzip". Check Markus that it is unzipped, a ZIP file is not acceptable and will receive a grade of 0):
+
+|____a1
+| |____config.json
+| |____compiled
+| | |____ProductService <-- this is a directory too
+| | |____UserService <-- this is a directory too 
+| | |____OrderService <-- this is a directory too 
+| | |____ISCS <-- this is a directory too 
+| |____docs <-- this is a directory too
+| |____runme.sh
+| |____tests <-- this is a directory too, if you have tests, place them here.
+| |____src
+| | |____ProductService <-- this is a directory too
+| | |____UserService <-- this is a directory too 
+| | |____OrderService <-- this is a directory too
+| | |____ISCS <-- this is a directory too 
+
+src: contains all the source code you wrote
+tests: optional directory, if you have written tests, place them here.
+compiled: contains the compiled java class files, any jar files, python scripts, bash scripts, etc.
+  including config.json and runme.sh in the respective directories as shown.
+docs: contains javadocs for UserService, ProductService, OrderService and ISCS; Docs will also contain 
+writeup.pdf: which is your group's account of which parts of your submission you used Generative AI for (include a brief discussion of whether you modified the AI code and if so to what extent), as well as a discussion of where you took shortcuts and submitted a "this will do for a1, but won't scale and needs a rewrite for a2 but time is precious and it will likely pass test cases" as well as which pieces of code you think will NOT require major rewrites for a2, inlcude a WHY you believe this, justify your statements.. 
+- We will use the code in the directory "compiled" and only look at src:
+-- for plagiarism and integrity purposes
+-- to check runme.sh is working for compilation purposes
+-- and in case there are technical problems with your submission, but we will not compile your code and use whatever the TAs compile, you MUST submit working code/class files/executables.
+- Submit all code required to run your program via MarkUs.
+- (inlcuding jar files etc.)
+- Make sure you test the following: 
+--- any user can run the compilation scripts of all the services (i.e., you and your other team member can both run the steps... "but it works on my machine" or "but it works when I run it" are not acceptable excuses).
+--- you should all SSH into the labs and have multiple terminal open and start the services to make sure your compilation and start scripts are not relying on certain user permissions or paths that the TAs won't have.
+--- Do not assume your code is run in a hard coded directory, it could be run in literally any direcory. 
+
+
+How will we test and grade this:
+- Does your code compile? --> we will delete/move your compiled directory and use your runme.sh -c 
+==> no warnings, no errors and all classes are produced ==> good
+- Check whether the classes we compiled just now match the ones you submitted (not 100% but close enough).
+- We move your "compiled" to several machines in the lab
+-- We start up all the services in a random order
+-- We then run runme.sh -w workload.txt (the provided workload file) and check correctness and speed. (max. 1 minute)
+-- We then run runme.sh -w ourownprivateworkloadfile.txt (some testing workload files) and check correctness and speed (max. 2 minutes)
+-- We then run runme.sh -w ourownprivateworkloadfile2.txt (some testing workload files) and check correctness and speed including the additional requirement of the shutdown/restart and data cleaning (i.e., the requirement introduced 1 week before the due date) (max. 2 minutes)
+-- 33.34% of your points will come from the writeup.pdf
+
+
+Considerations for A1 and A2:
+- In A1, we will only test it with at most 10 different users, 10 different products and at most 100 commands.
+- For A2, as will often happen in real life, new features and services are to be added and
+  we will test it with 10000 users, 10000 products and upto 1 million commands that have to complete 
+  in a short amount of time (e.g., 4 minutes) (scalability will be an issue...consider that the config file will then
+  not just have a single IP and port, but lists of IP addresses and ports, so plan ahead).
+- For A2, this system will have to handle shutdowns of individual "machines" (i.e. we will physically shutdown the machines that a/all UserService instances are running on and then bring them back up...your system should not crash and all commands/transactions must continue (e.g., just because a server of Instagram fails or shutsdown, that doesn't mean Instagram is down or that you lose all your previously posted pictures)).
+
+FAQ:
+- Q: What about out of order execution to speed things up with multiple threads/processes?
+  A: As long as each "user" or "product" id's commands are executed in chronological order, it's fine.

@@ -1,0 +1,3 @@
+ORDER place 3 1  # This should succeed
+ORDER place 3 2000  # This should fail, product id 3 does not have 2000 quantity
+ORDER place 9993 3  # This should fail, no order id 9993  
