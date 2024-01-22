@@ -27,7 +27,6 @@ public class Main {
         // Set up context for /test2 GET request
         server.createContext("/test2", new Test2Handler());
 
-
         server.setExecutor(null); // creates a default executor
 
         server.start();
