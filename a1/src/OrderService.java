@@ -1,22 +1,20 @@
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
-import netscape.javascript.JSObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-
-import java.sql.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
-import src.JSONObject;
 
 /*
 Order Service:
@@ -50,54 +48,147 @@ public class OrderService {
     public static String jdbcUrl = "jdbc:sqlite:UserDatabase.db";
 
     public static void main(String[] args) throws IOException {
-        JSONObject s = new JSONObject();
-        //Replace this with a get request from database
-        Map<String, String> map = new HashMap<String, String>();
-        map.put("command", "place order");
-        map.put("user_id", "");
-        map.put("product_id", "2");
-        map.put("quantity", "3");
 
-        // Open a connection
-        Connection connection = DriverManager.getConnection(jdbcUrl);
+        int port = 8080;
+        OrderHandler newHandler = new OrderHandler();
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+        server.setExecutor(Executors.newFixedThreadPool(20));
+        server.createContext("/order", newHandler);
+        server.start();
 
-        //Break down the 'JSON'
-        String user = s.getString("user_id");
-        String productID = s.getString("product_id");
-        String quantity = s.getString("quantity");
+        System.out.println("Server started on port 8080");
+    }
 
-        try (Statement statement = connection.createStatement()) {
-            // Execute the query to create the User table
-            statement.executeUpdate(createTableQuery);
-            System.out.println("User table created successfully.");
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
+
+    static class OrderHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if("POST".equals((exchange.getRequestMethod()))) {
+                JSONObject requestBody = getRequestBody(exchange);
+                String command = requestBody.getString("command");
+
+                String palceholder = requestBody.getString("USER create # john_doe john.doe@example.com password123";);
+                Map<String, String> userData = parseUserCommand(palceholder);
+                String jsonInputString = createJsonString(userData);
+                if(requestBody.getString("command") != null){
+                    if ("ORDER".equals(command)) {
+                        jsonOrderRequest(requestBody, exchange);
+                    }else if("PRODUCT".equals(command)){
+                        jsonOrderRequest(requestBody, exchange);
+                    }else if("USER".equals(command)){
+                        postUser("http://localhost:80/user", jsonInputString);
+                    }
+                }
+            } else {
+                exchange.sendResponseHeaders(405, 0);
+                exchange.close();
+            }
         }
-        // Close the connection
-        connection.close();
-
-        /*For Http request*/
-        int port = 80;
-        HttpServer UserServer = HttpServer.create(new InetSocketAddress(port), 0);
-        // Example: Set a custom executor with a fixed-size thread pool
-        UserServer.setExecutor(Executors.newFixedThreadPool(1)); // Adjust the pool size as needed
-        // Set up context for /test POST request
-        UserServer.createContext("/user", new UserService.TestHandler());
-
-        UserServer.setExecutor(null); // creates a default executor
-
-        UserServer.start();
-
-        System.out.println("User Server started on port " + port);
     }
 
-    public static boolean handleOrder(String userID, String productID, String quantity){
-        String checkUser = "SELECT * FROM user WHERE = '" + userID + "'";
-        String checkProduct = "SELECT * FROM product_id WHERE = '" + productID + "'";
-        String checkQuantity = "SELECT * FROM quantity WHERE product_id = '" + quantity + "'";
-        
-        
-        return true;
+    public static void jsonOrderRequest(JSONObject requestBody, HttpExchange exchange) throws IOException {
+        System.out.println(requestBody);
+        if(requestBody.getString("command") != null){
+            String command = requestBody.getString("command");
+            
+            if ("place order".equals(command)) {
+                if (requestBody.getString("user_id") != null && requestBody.getString("product_id") != null) {
+                    int userId = requestBody.getInt("user_id");
+                    int productId = requestBody.getInt("product_id");
+                    int quantity = requestBody.getInt("quantity");
+
+                    String checkUser = "SELECT * FROM user WHERE = '" + userId + "'";
+                    String checkProduct = "SELECT * FROM product_id WHERE = '" + productId + "'";
+                    String checkQuantity = "SELECT * FROM quantity WHERE product_id = '" + quantity + "'";
+
+                    System.out.println("User ID: " + userId);
+                    System.out.println("Product ID: " + productId);
+                    System.out.println("Quantity: " + quantity);
+                }
+            }
+        }
+
+        String response = "Order processed";
+        exchange.sendResponseHeaders(200, response.getBytes().length);
+        OutputStream os = exchange.getResponseBody();
+        os.write(response.getBytes());
+        os.close();
     }
+
+    public static void postUser(String targetURL, String jsonInputString) throws IOException {
+        HttpURLConnection connection = null;
+
+        try {
+            URL url = new URL(targetURL);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json; utf-8");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setDoOutput(true);
+
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            // Read the response from the server
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                StringBuilder response = new StringBuilder();
+                String responseLine;
+                while ((responseLine = br.readLine()) != null) {
+                    response.append(responseLine.trim());
+                }
+                System.out.println("Response from User Service: " + response);
+            }
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    private static JSONObject getRequestBody(HttpExchange exchange) throws IOException {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {
+            StringBuilder requestBody = new StringBuilder();
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                requestBody.append(line);
+            }
+
+            return new JSONObject(requestBody.toString());
+        }
+    }
+
+    public static String createUserCommand(Map<String, String> userData) {
+        return new JSONObject()
+                .put("command", "create")
+                .put("username", userData.get("username"))
+                .put("email", userData.get("email"))
+                .put("password", userData.get("password"))
+                .toString();
+    }
+
+    public static String createJsonString(Map<String, String> userData) {
+        return new JSONObject()
+                .put("command", "create")
+                .put("username", userData.get("username"))
+                .put("email", userData.get("email"))
+                .put("password", userData.get("password"))
+                .toString();
+    }
+
+    public static Map<String, String> parseUserCommand(String command) {
+    Map<String, String> userData = new HashMap<>();
+    String[] parts = command.split(" ");
+    
+    if (parts.length >= 5 && "USER".equals(parts[0]) && "create".equals(parts[1])) {
+        userData.put("username", parts[3]);
+        userData.put("email", parts[4]);
+        userData.put("password", parts[5]);
+    }
+    return userData;
+}
 
 }
