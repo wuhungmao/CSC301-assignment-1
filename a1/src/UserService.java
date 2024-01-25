@@ -21,6 +21,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 /*User Service:
 This must be written in Java and must be started with the following command: "java UserService config.json"
 Implement a user microservice responsible for user management.
@@ -69,10 +73,6 @@ returns the following JSON in the response body.
     "email": "foo@bar.com",
 }
 */
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 public class UserService {
     public static String jdbcUrl = "jdbc:sqlite:UserDatabase.db"; 
@@ -105,8 +105,6 @@ public class UserService {
         // Set up context for /test POST request
         UserServer.createContext("/user", new TestHandler());
 
-        UserServer.setExecutor(null); // creates a default executor
-
         UserServer.start();
 
         System.out.println("User Server started on port " + port);
@@ -117,20 +115,22 @@ public class UserService {
         public void handle(HttpExchange exchange) throws IOException {
             // Handle POST request for /test
             if ("POST".equals(exchange.getRequestMethod())) {
-                String clientAddress = exchange.getRemoteAddress().getAddress().toString();
-                String requestMethod = exchange.getRequestMethod();
-                String requestURI = exchange.getRequestURI().toString();
-                Map<String, List<String>> requestHeaders = exchange.getRequestHeaders();
+                {
+                    // For debugging purposes
+                    // String clientAddress = exchange.getRemoteAddress().getAddress().toString();
+                    // String requestMethod = exchange.getRequestMethod();
+                    // String requestURI = exchange.getRequestURI().toString();
+                    // Map<String, List<String>> requestHeaders = exchange.getRequestHeaders();
 
-                System.out.println("Client Address: " + clientAddress);
-                System.out.println("Request Method: " + requestMethod);
-                System.out.println("Request URI: " + requestURI);
-                System.out.println("Request Headers: " + requestHeaders);
-                // Print all request headers
-                for (Map.Entry<String, List<String>> header : requestHeaders.entrySet()) {
-                    System.out.println(header.getKey() + ": " + header.getValue().getFirst());
+                    // System.out.println("Client Address: " + clientAddress);
+                    // System.out.println("Request Method: " + requestMethod);
+                    // System.out.println("Request URI: " + requestURI);
+                    // System.out.println("Request Headers: " + requestHeaders);
+                    // // Print all request headers
+                    // for (Map.Entry<String, List<String>> header : requestHeaders.entrySet()) {
+                    //     System.out.println(header.getKey() + ": " + header.getValue().getFirst());
+                    // }
                 }
-
                 JSONObject requestbody = getRequestBody(exchange);
                 
                 /* Get values */
@@ -158,8 +158,6 @@ public class UserService {
 
                         if (rowsAffected > 0) {
                             System.out.println("User information updated successfully.");
-                        } else {
-                            System.out.println("No user found with the specified ID.");
                         }
                     } catch (SQLException e) {
                         e.printStackTrace();
@@ -267,7 +265,7 @@ public class UserService {
 
                     // Create a JSONObject with the fetched user details
                     JSONObject responseBody = new JSONObject()
-                            .put("user_id", id)
+                            .put("id", id)
                             .put("username", Username)
                             .put("email", Email)
                             .put("password", Password);
@@ -337,8 +335,6 @@ public class UserService {
         }
     }
 
-
-    
     private static void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
         exchange.sendResponseHeaders(statusCode, response.length());
         OutputStream os = exchange.getResponseBody();
