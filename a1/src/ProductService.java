@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
+//import JSONObject
+import org.json.JSONObject;
+
 //Database
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -55,38 +58,54 @@ if the product with this ID exists, service will return the following JSON in th
 public class ProductService {
     public static String jdbcUrl = "jdbc:sqlite:ProductDatabase.db"; 
     public static void main(String[] args) throws IOException, SQLException {
-        // Open a connection
-        Connection connection = DriverManager.getConnection(jdbcUrl);
+
+        // Read the JSON configuration file
+        String configFile = args[0];
+
+        try {
+            JSONObject config = JSONObject.readConfigFile(configFile);
+            JSONObject productServiceConfig = config.getJSONObject("ProductService");
+
+            // Extract IP address and port number
+            String ipAddress = productServiceConfig.getString("ip");
+            int port = productServiceConfig.getInt("port");
+
+            // Open a connection
+            Connection connection = DriverManager.getConnection(jdbcUrl);
+                
+            //Before starting server, create User database
+            String createTableQuery = "CREATE TABLE IF NOT EXISTS Product ("
+                        + "productId INTEGER PRIMARY KEY,"
+                        + "productName TEXT NOT NULL,"
+                        + "description TEXT NOT NULL,"
+                        + "price INTEGER NOT NULL,"
+                        + "quantity INTEGER NOT NULL)";
+            try (Statement statement = connection.createStatement()) {
+                // Execute the query to create the User table
+                statement.executeUpdate(createTableQuery);
+                System.out.println("Product table created successfully.");
+            } catch (SQLException sqle) {
+                sqle.printStackTrace();
+            }
             
-        //Before starting server, create User database
-        String createTableQuery = "CREATE TABLE IF NOT EXISTS Product ("
-                    + "productId INTEGER PRIMARY KEY,"
-                    + "productName TEXT NOT NULL,"
-                    + "description TEXT NOT NULL,"
-                    + "price INTEGER NOT NULL)"
-                    + "quantity INTEGER NOT NULL";
-        try (Statement statement = connection.createStatement()) {
-            // Execute the query to create the User table
-            statement.executeUpdate(createTableQuery);
-            System.out.println("Product table created successfully.");
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            // Close the connection
+            connection.close();
+    
+            /*For Http request*/
+            HttpServer ProductServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+            // Example: Set a custom executor with a fixed-size thread pool
+            ProductServer.setExecutor(Executors.newFixedThreadPool(1)); // Adjust the pool size as needed
+            // Set up context for /test POST request
+            ProductServer.createContext("/product", new TestHandler());
+
+            ProductServer.start();
+
+            System.out.println("Product Server started on port " + port);
+        } catch (IOException e) {
+            System.err.println("Error reading the configuration file: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("An unexpected error occurred: " + e.getMessage());
         }
-        
-        // Close the connection
-        connection.close();
- 
-        /*For Http request*/
-        int port = 80;
-        HttpServer ProductServer = HttpServer.create(new InetSocketAddress(port), 0);
-        // Example: Set a custom executor with a fixed-size thread pool
-        ProductServer.setExecutor(Executors.newFixedThreadPool(1)); // Adjust the pool size as needed
-        // Set up context for /test POST request
-        ProductServer.createContext("/product", new TestHandler());
-
-        ProductServer.start();
-
-        System.out.println("Product Server started on port " + port);
     }
 
     static class TestHandler implements HttpHandler {
@@ -113,7 +132,6 @@ public class ProductService {
                 JSONObject requestbody = getRequestBody(exchange);
                 
                 /* Get values */
-                /* WORK ON THIS: Each method has different body parameters */
 
                 String command = requestbody.getString("command");
                 
@@ -354,5 +372,4 @@ public class ProductService {
         os.write(response.getBytes(StandardCharsets.UTF_8));
         os.close();
     }
-
 }

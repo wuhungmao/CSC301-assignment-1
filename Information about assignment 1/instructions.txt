@@ -31,8 +31,6 @@ The workload parser makes an HTTP request to the OrderService using the exact AP
 for the User and Product service. See architecture.png for a conceptual visualization.
 Note: This can be written in any programming language as long as it runs on the labs without needing to install anything.
 
-
-
 User Service:
 This must be written in Java and must be started with the following command: "java UserService config.json"
 Implement a user microservice responsible for user management.
@@ -108,7 +106,6 @@ if the product with this ID exists, service will return the following JSON in th
     "quantity": 9
 }
 
-
 Order Service:
 This must be written in Java
 This is the service's public facing endpoint. It is used to 
@@ -151,8 +148,6 @@ ISCS, inspects the payload (or has its own API endpoints) and just constructs/fo
 the payload to the correct microservice.
 (Thought: Could you use this for caching too to speed up and increase
  your system's transactions per second?)
-
-
 
 Compilation and startup:
 
