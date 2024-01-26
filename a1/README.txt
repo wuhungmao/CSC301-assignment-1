@@ -1,0 +1,1 @@
+run .\runme.sh -c to compile the code
