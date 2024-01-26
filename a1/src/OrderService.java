@@ -117,7 +117,7 @@ public class OrderService {
                 //Make sure the JSON is of correct format with user id product id and qunatity
                 if (requestBody.getString("user_id") != null && requestBody.getString("product_id") != null && requestBody.getString("quantity") != null) {
                     String userId = requestBody.getString("user_id");
-                    String productId = requestBody.getString("product_id");
+                    int productId = requestBody.getInt("product_id");
                     int quantity = requestBody.getInt("quantity");
                     
                     try {
