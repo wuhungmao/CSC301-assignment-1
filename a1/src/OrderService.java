@@ -116,15 +116,15 @@ public class OrderService {
             if ("place".equals(command)) {
                 //Make sure the JSON is of correct format with user id product id and qunatity
                 if (requestBody.getString("user_id") != null && requestBody.getString("product_id") != null && requestBody.getString("quantity") != null) {
-                    int userId = requestBody.getInt("user_id");
-                    int productId = requestBody.getInt("product_id");
+                    String userId = requestBody.getString("user_id");
+                    String productId = requestBody.getString("product_id");
                     int quantity = requestBody.getInt("quantity");
                     
                     try {
                             Connection connection = DriverManager.getConnection("jdbc:sqlite:ProductDatabase.db");
                             String selectQuery = "SELECT * FROM Product WHERE productId = ?";
                             PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
-                            preparedStatement.setInt(1, id_int);
+                            preparedStatement.setInt(1, productId);
             
                             ResultSet resultSet = preparedStatement.executeQuery();
 
