@@ -59,7 +59,6 @@ public class OrderService {
         System.out.println("Server started on port 8080");
     }
 
-
     static class OrderHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -67,8 +66,8 @@ public class OrderService {
                 JSONObject requestBody = getRequestBody(exchange);
                 String command = requestBody.getString("command");
 
-                String palceholder = requestBody.getString("USER create # john_doe john.doe@example.com password123";);
-                Map<String, String> userData = parseUserCommand(palceholder);
+                String placeholder = requestBody.getString("USER create # john_doe john.doe@example.com password123");
+                Map<String, String> userData = parseUserCommand(placeholder);
                 String jsonInputString = createJsonString(userData);
                 if(requestBody.getString("command") != null){
                     if ("ORDER".equals(command)) {

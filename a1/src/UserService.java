@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
+
+//import JSONObject
+import org.json.JSONObject;
+
 //Database
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -77,38 +81,54 @@ returns the following JSON in the response body.
 public class UserService {
     public static String jdbcUrl = "jdbc:sqlite:UserDatabase.db"; 
     public static void main(String[] args) throws IOException, SQLException {
-        // Open a connection
-        Connection connection = DriverManager.getConnection(jdbcUrl);
+        // Read the JSON configuration file
+        String configFile = args[0];
+
+        try {
+            JSONObject config = JSONObject.readConfigFile(configFile);
+            JSONObject userServiceConfig = config.getJSONObject("UserService");
+
+            // Extract IP address and port number
+            String ipAddress = userServiceConfig.getString("ip");
+            int port = userServiceConfig.getInt("port");
+
+            // Open a connection
+            Connection connection = DriverManager.getConnection(jdbcUrl);
+                
+            //Before starting server, create User database
+            String createTableQuery = "CREATE TABLE IF NOT EXISTS User ("
+                        + "user_id INTEGER PRIMARY KEY,"
+                        + "username TEXT NOT NULL,"
+                        + "email TEXT NOT NULL,"
+                        + "password TEXT NOT NULL)";
+            try (Statement statement = connection.createStatement()) {
+                // Execute the query to create the User table
+                statement.executeUpdate(createTableQuery);
+                System.out.println("User table created successfully.");
+            } catch (SQLException sqle) {
+                sqle.printStackTrace();
+            }
             
-        //Before starting server, create User database
-        String createTableQuery = "CREATE TABLE IF NOT EXISTS User ("
-                    + "user_id INTEGER PRIMARY KEY,"
-                    + "username TEXT NOT NULL,"
-                    + "email TEXT NOT NULL,"
-                    + "password TEXT NOT NULL)";
-        try (Statement statement = connection.createStatement()) {
-            // Execute the query to create the User table
-            statement.executeUpdate(createTableQuery);
-            System.out.println("User table created successfully.");
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            // Close the connection
+            connection.close();
+    
+            /*For Http request*/
+            HttpServer userServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+            // Example: Set a custom executor with a fixed-size thread pool
+            userServer.setExecutor(Executors.newFixedThreadPool(1)); // Adjust the pool size as needed
+            // Set up context for /test POST request
+            userServer.createContext("/user", new TestHandler());
+
+            userServer.start();
+
+            System.out.println("user Server started on port " + port);
+        } catch (IOException e) {
+            System.err.println("Error reading the configuration file: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("An unexpected error occurred: " + e.getMessage());
         }
-        
-        // Close the connection
-        connection.close();
- 
-        /*For Http request*/
-        int port = 80;
-        HttpServer UserServer = HttpServer.create(new InetSocketAddress(port), 0);
-        // Example: Set a custom executor with a fixed-size thread pool
-        UserServer.setExecutor(Executors.newFixedThreadPool(1)); // Adjust the pool size as needed
-        // Set up context for /test POST request
-        UserServer.createContext("/user", new TestHandler());
-
-        UserServer.start();
-
-        System.out.println("User Server started on port " + port);
     }
+
 
     static class TestHandler implements HttpHandler {
         @Override
