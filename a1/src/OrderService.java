@@ -2,6 +2,9 @@ import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.Arrays;
 import java.util.List;
 
@@ -56,11 +59,17 @@ All communication from OrderService MUST go to ISCS which will route and load ba
 Note: this means that to place an order, you may have to first make a GET request, then an "update order" POST request.
  */
 public class OrderService {
+    public static HttpServer server;
+    public static ExecutorService httpThreadPool;
     public static String jdbcUrl = "jdbc:sqlite:UserDatabase.db";
+    private static final String ISCS_ENDPOINT = "http://127.0.0.0.1/forward";
+
+    //Shutdown Signals
+    public static int workRunning = 0;
 
     public static void main(String[] args) throws IOException {
         try{            
-            String configFilePath = "./a1/config.json";
+            String configFilePath = "/a1/config.json";
             JSONObject orderServiceConfig = getIPAddressFromConfig(configFilePath);
 
             // Extract IP address and port
@@ -81,7 +90,11 @@ public class OrderService {
         server.createContext("/order", newHandler);
         server.start();
 
-        System.out.println("Server started on port 8080");
+        //Need shutdown in new requirements, this is a hook that shutdowns the server
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down server...");
+            shutdownServer();
+        }));
     }
 
 
@@ -109,7 +122,8 @@ public class OrderService {
     //If order is place go inside of this body. 
     public static void processOrder(JSONObject requestBody, HttpExchange exchange) throws IOException {
         System.out.println("json sent: " + requestBody.getString("command"));
-
+        try{
+            workRunning++;
         if(requestBody.getString("command") != null){
             String command = requestBody.getString("command");
             //Check if order is placed or return null
@@ -166,8 +180,11 @@ public class OrderService {
                         JSONObject responseBody = new JSONObject()
                         .put("status", "Invalid Reques");
                     }
+                }
             }
         }
+    }finally{
+        workRunning--;
     }
 
         String response = "Order processed";
@@ -175,6 +192,10 @@ public class OrderService {
         OutputStream os = exchange.getResponseBody();
         os.write(response.getBytes());
         os.close();
+    }
+
+    public static boolean isRunning(){
+        return workRunning > 0;
     }
 
     private void processProduct(JSONObject requestBody, HttpExchange exchange) throws IOException {
@@ -278,6 +299,33 @@ public class OrderService {
         //Split the wordload by space
         String[] words = input.split(" ");
         return Arrays.asList(words);
+    }
+
+    //Shutdown 
+    private static void shutdownServer() {
+        // Stop accepting new requests
+        int timeout = 10;
+        while (isRunning() && timeout > 0) {
+            try{
+                Thread.sleep(1000);
+            }catch(InterruptedException e){
+                System.out.println("wait");
+            }
+            timeout--;
+        }
+        server.removeContext("/");
+        server.stop(0);
+        httpThreadPool.shutdown();
+        try {
+            if (!httpThreadPool.awaitTermination(60, TimeUnit.SECONDS)) {
+                httpThreadPool.shutdownNow();
+            }
+        } catch (InterruptedException ex) {
+            httpThreadPool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+
+        System.out.println("Server shut down.");
     }
 
 
