@@ -85,7 +85,9 @@ public class UserService {
         String configFile = args[0];
 
         try {
-            JSONObject config = JSONObject.readConfigFile(configFile);
+            String configContent = new String(Files.readAllBytes(Paths.get(configFile)));
+
+            JSONObject config = new JSONObject(configContent);
             JSONObject userServiceConfig = config.getJSONObject("UserService");
 
             // Extract IP address and port number

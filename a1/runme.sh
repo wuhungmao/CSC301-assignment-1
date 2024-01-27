@@ -42,9 +42,9 @@
 case "$1" in
   -c)
     # Compile code
-    classpath=".:/sqlite-jdbc-3.45.0.jar:./json-java.jar"
-    javac -cp "$classpath" src/UserService.java
-    javac -cp "$classpath" src/ProductService.java
+    javac -cp "json-java.jar:sqlite-jdbc-3.45.0.jar" src/UserService.java
+    javac -cp "json-java.jar:sqlite-jdbc-3.45.0.jar" src/ProductService.java
+
     # Compile OrderService.java (Adjust the path accordingly)
     javac -cp "$classpath" src/OrderService.java
 

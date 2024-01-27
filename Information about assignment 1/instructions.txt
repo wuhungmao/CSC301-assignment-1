@@ -201,6 +201,8 @@ Submit the following directory structure (due to how markus works, submit a zip 
 | | |____UserService <-- this is a directory too 
 | | |____OrderService <-- this is a directory too 
 | | |____ISCS <-- this is a directory too 
+| |____json-java.jar
+| |____sqlite-jdbc-3.45.0.jar
 | |____docs <-- this is a directory too
 | |____runme.sh
 | |____tests <-- this is a directory too, if you have tests, place them here.
