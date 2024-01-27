@@ -69,7 +69,7 @@ public class OrderService {
 
             System.out.println("OrderService IP Address: " + ipAddress);
             System.out.println("OrderService Port: " + port);
-        }catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         //Create order hadnler

@@ -63,9 +63,11 @@ public class ProductService {
         String configFile = args[0];
 
         try {
-            JSONObject config = JSONObject.readConfigFile(configFile);
-            JSONObject productServiceConfig = config.getJSONObject("ProductService");
+            // Read the content of the configuration file
+            String configContent = new String(Files.readAllBytes(Paths.get(configFile)));
 
+            JSONObject config = new JSONObject(configContent);
+            JSONObject productServiceConfig = config.getJSONObject("ProductService");
             // Extract IP address and port number
             String ipAddress = productServiceConfig.getString("ip");
             int port = productServiceConfig.getInt("port");
