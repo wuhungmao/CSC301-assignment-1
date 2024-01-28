@@ -1,6 +1,6 @@
 {
-  "UserService": {
-        "port": 14001,
+    "UserService": {
+        "port": 8081,
         "ip": "127.0.0.1"
     }   ,
     "OrderService": {
@@ -8,8 +8,8 @@
         "ip": "142.1.46.48"
     }   ,
     "ProductService": {
-        "port": 15000,
-        "ip": "142.1.46.49"
+        "port": 8080,
+        "ip": "127.0.0.1"
     }   ,
     "InterServiceCommunication": {
         "port": 14000,

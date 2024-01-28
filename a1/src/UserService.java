@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
-
 //import JSONObject
 import org.json.JSONObject;
 
@@ -79,11 +78,10 @@ returns the following JSON in the response body.
 */
 
 public class UserService {
-    public static String jdbcUrl = "jdbc:sqlite:UserDatabase.db"; 
+    public static String jdbcUrl = "jdbc:sqlite:/student/wuhungma/Desktop/a1/db/UserDatabase.db"; 
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
         String configFile = args[0];
-
         try {
             String configContent = new String(Files.readAllBytes(Paths.get(configFile)));
 
@@ -117,7 +115,7 @@ public class UserService {
             /*For Http request*/
             HttpServer userServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
             // Example: Set a custom executor with a fixed-size thread pool
-            userServer.setExecutor(Executors.newFixedThreadPool(1)); // Adjust the pool size as needed
+            userServer.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
             // Set up context for /test POST request
             userServer.createContext("/user", new TestHandler());
 
@@ -179,7 +177,7 @@ public class UserService {
                         connection.close();
 
                         if (rowsAffected > 0) {
-                            System.out.println("User information updated successfully.");
+                            System.out.println("User information created successfully.");
                         }
                     } catch (SQLException e) {
                         e.printStackTrace();

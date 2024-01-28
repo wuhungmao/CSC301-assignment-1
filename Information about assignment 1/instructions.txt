@@ -201,8 +201,6 @@ Submit the following directory structure (due to how markus works, submit a zip 
 | | |____UserService <-- this is a directory too 
 | | |____OrderService <-- this is a directory too 
 | | |____ISCS <-- this is a directory too 
-| |____json-java.jar
-| |____sqlite-jdbc-3.45.0.jar
 | |____docs <-- this is a directory too
 | |____runme.sh
 | |____tests <-- this is a directory too, if you have tests, place them here.
@@ -217,7 +215,14 @@ tests: optional directory, if you have written tests, place them here.
 compiled: contains the compiled java class files, any jar files, python scripts, bash scripts, etc.
   including config.json and runme.sh in the respective directories as shown.
 docs: contains javadocs for UserService, ProductService, OrderService and ISCS; Docs will also contain 
-writeup.pdf: which is your group's account of which parts of your submission you used Generative AI for (include a brief discussion of whether you modified the AI code and if so to what extent), as well as a discussion of where you took shortcuts and submitted a "this will do for a1, but won't scale and needs a rewrite for a2 but time is precious and it will likely pass test cases" as well as which pieces of code you think will NOT require major rewrites for a2, inlcude a WHY you believe this, justify your statements.. 
+writeup.pdf: which is your group's account of which parts of your submission you used Generative AI for
+(include a brief discussion of whether you modified the AI code and if so to what extent), 
+as well as a discussion of where you took shortcuts and submitted a "this will do for a1, 
+but won't scale and needs a rewrite for a2 but time is precious and it will likely pass test cases"
+as well as which pieces of code you think will NOT require major rewrites for a2, inlcude a WHY you believe this, 
+justify your statements.. 
+
+
 - We will use the code in the directory "compiled" and only look at src:
 -- for plagiarism and integrity purposes
 -- to check runme.sh is working for compilation purposes

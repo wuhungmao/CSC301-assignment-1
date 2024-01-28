@@ -42,8 +42,8 @@
 case "$1" in
   -c)
     # Compile code
-    javac -cp "json-java.jar:sqlite-jdbc-3.45.0.jar" src/UserService.java
-    javac -cp "json-java.jar:sqlite-jdbc-3.45.0.jar" src/ProductService.java
+    javac -classpath "./compiled/*" -d ./compiled src/UserService.java 
+    javac -classpath "./compiled/*" -d ./compiled src/ProductService.java 
 
     # Compile OrderService.java (Adjust the path accordingly)
     javac -cp "$classpath" src/OrderService.java
@@ -51,11 +51,11 @@ case "$1" in
     ;;
   -u)
     # Start User service
-    java UserService config.json
+    java -classpath "./compiled/*"  src/UserService.java config.json 
     ;;
   -p)
     # Start Product service
-    java ProductService config.json
+    java -classpath "./compiled/*"  src/ProductService.java config.json
     ;;
   -i)
     # Start ISCS
@@ -68,7 +68,7 @@ case "$1" in
   -w)
     # Start Workload parser with specified workload file
     # Assuming workload file is provided as the second argument
-    # python workload_parser.py <IP_address_of_Order_service> <port_number_of_Order_service> <>"     
+    python3.7 ./compiled/workload_parser.py $2 config.json
     ;;
   *)
     echo "Invalid option. Usage: $0 -c|-u|-p|-i|-o|-w workloadfile"

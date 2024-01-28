@@ -24,6 +24,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.sqlite.JDBC;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.security.MessageDigest;
@@ -56,9 +58,8 @@ if the product with this ID exists, service will return the following JSON in th
 }
 */
 public class ProductService {
-    public static String jdbcUrl = "jdbc:sqlite:ProductDatabase.db"; 
+    static String jdbcUrl = "jdbc:sqlite:/student/wuhungma/Desktop/a1/db/ProductDatabase.db";
     public static void main(String[] args) throws IOException, SQLException {
-
         // Read the JSON configuration file
         String configFile = args[0];
 
@@ -68,13 +69,17 @@ public class ProductService {
 
             JSONObject config = new JSONObject(configContent);
             JSONObject productServiceConfig = config.getJSONObject("ProductService");
+
             // Extract IP address and port number
             String ipAddress = productServiceConfig.getString("ip");
             int port = productServiceConfig.getInt("port");
 
+            // Register the SQLite JDBC driver
+            // Class.forName("org.sqlite.JDBC");
             // Open a connection
+            // Class.forName("org.sqlite.JDBC");
             Connection connection = DriverManager.getConnection(jdbcUrl);
-                
+
             //Before starting server, create User database
             String createTableQuery = "CREATE TABLE IF NOT EXISTS Product ("
                         + "productId INTEGER PRIMARY KEY,"
@@ -92,11 +97,11 @@ public class ProductService {
             
             // Close the connection
             connection.close();
-    
+            
             /*For Http request*/
             HttpServer ProductServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
             // Example: Set a custom executor with a fixed-size thread pool
-            ProductServer.setExecutor(Executors.newFixedThreadPool(1)); // Adjust the pool size as needed
+            ProductServer.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
             // Set up context for /test POST request
             ProductServer.createContext("/product", new TestHandler());
 
@@ -146,7 +151,7 @@ public class ProductService {
                         String id = String.valueOf(id_int);
                         String productName = requestbody.getString("name");
                         String description = requestbody.getString("description");
-                        int price_int = requestbody.getInt("price");
+                        double price_double = requestbody.getDouble("price");
                         // String price = String.valueOf(price_int);
                         int quantity_int = requestbody.getInt("quantity");
                         // String quantity = String.valueOf(quantity_int);
@@ -157,13 +162,13 @@ public class ProductService {
                         preparedStatement.setInt(1, id_int);
                         preparedStatement.setString(2, productName);
                         preparedStatement.setString(3, description);
-                        preparedStatement.setInt(4, price_int);
+                        preparedStatement.setDouble(4, price_double);
                         preparedStatement.setInt(5, quantity_int);
                         int rowsAffected = preparedStatement.executeUpdate();
                         preparedStatement.close();
                         connection.close();
 
-                        JSONObject responseBody = createResponse(exchange, requestbody, id, id_int, productName, description, price_int, quantity_int);
+                        JSONObject responseBody = createResponse(exchange, requestbody, id, id_int, productName, description, price_double, quantity_int);
                         
                         //Put in all information that needs to be sent to the client
                         int statusCode = 200;
@@ -172,6 +177,7 @@ public class ProductService {
                         if (rowsAffected > 0) {
                             System.out.println("Product information updated successfully.");
                         } 
+
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -185,7 +191,7 @@ public class ProductService {
                         String id = String.valueOf(id_int);
                         String productName = requestbody.getString("name");
                         String description = requestbody.getString("description");
-                        int price_int = requestbody.getInt("price");
+                        double price_double = requestbody.getDouble("price");
                         // String price = String.valueOf(price_int);
                         int quantity_int = requestbody.getInt("quantity");
                         // String quantity = String.valueOf(quantity_int);
@@ -195,7 +201,7 @@ public class ProductService {
                         PreparedStatement preparedStatement = connection.prepareStatement(updateQuery);
                         preparedStatement.setString(1, productName);
                         preparedStatement.setString(2, description);
-                        preparedStatement.setInt(3, price_int);
+                        preparedStatement.setDouble(3, price_double);
                         preparedStatement.setInt(4, quantity_int);
                         preparedStatement.setInt(5, id_int);
 
@@ -203,7 +209,7 @@ public class ProductService {
                         preparedStatement.close();
                         connection.close();
 
-                        JSONObject responseBody = createResponse(exchange, requestbody, id, id_int, productName, description, price_int, quantity_int);
+                        JSONObject responseBody = createResponse(exchange, requestbody, id, id_int, productName, description, price_double, quantity_int);
                         //Put in all information that needs to be sent to the client
                         int statusCode = 200;
                         sendResponse(exchange, statusCode, responseBody.toString());
@@ -278,7 +284,7 @@ public class ProductService {
         }
 
     private static JSONObject createResponse(HttpExchange exchange, JSONObject requestBody,
-        String id, Integer id_int, String productName, String description, int price_int, int quantity_int) {
+        String id, Integer id_int, String productName, String description, double price_double, int quantity_int) {
         if ("GET".equals(exchange.getRequestMethod())) {
             try {
                 Connection connection = DriverManager.getConnection(jdbcUrl);
@@ -291,7 +297,7 @@ public class ProductService {
                     // Fetch user details from the result set
                     String productName_get = resultSet.getString("productName");
                     String description_get = resultSet.getString("description");
-                    Integer price_get = resultSet.getInt("price");
+                    double price_get = resultSet.getDouble("price");
                     Integer quantity_get = resultSet.getInt("quantity");
 
                     // Create a JSONObject with the fetched user details
@@ -330,7 +336,7 @@ public class ProductService {
                         .put("id", id)
                         .put("name", productName)
                         .put("description", description)
-                        .put("price", price_int)
+                        .put("price", price_double)
                         .put("quantity", quantity_int);
             } else {
                 // delete command requires an empty response
