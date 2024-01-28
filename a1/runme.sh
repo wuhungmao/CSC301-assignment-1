@@ -46,8 +46,8 @@ case "$1" in
     javac -classpath "./compiled/*" -d ./compiled src/ProductService.java 
 
     # Compile OrderService.java (Adjust the path accordingly)
-    javac -cp "$classpath" src/OrderService.java
-
+    #javac -cp "$classpath" src/OrderService.java
+    javac -cp "$.:json-java.jar:sqlite-jdbc-3.45.0.jar" src/OrderService.java
     ;;
   -u)
     # Start User service
