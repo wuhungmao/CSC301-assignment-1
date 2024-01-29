@@ -42,20 +42,20 @@
 case "$1" in
   -c)
     # Compile code
-    javac -classpath "./compiled/*" -d ./compiled src/UserService.java 
-    javac -classpath "./compiled/*" -d ./compiled src/ProductService.java 
+    javac -classpath "./compiled/*" -d ./compiled src/UserService/UserService.java
+    javac -classpath "./compiled/*" -d ./compiled src/ProductService/ProductService.java
 
     # Compile OrderService.java (Adjust the path accordingly)
     #javac -cp "$classpath" src/OrderService.java
-    javac -classpath ".:json-java.jar:sqlite-jdbc-3.45.0.jar" -d compiled src/OrderService/OrderService 
+    javac -classpath "./compiled/*" -d ./compiled src/OrderService/OrderService.java
     ;;
   -u)
     # Start User service
-    java -classpath "./compiled/*"  src/UserService.java config.json 
+    java -classpath "compiled:json-java.jar:sqlite-jdbc-3.45.0.jar"  UserService.UserService.java config.json 
     ;;
   -p)
     # Start Product service
-    java -classpath "./compiled/*"  src/ProductService.java config.json
+    java -classpath "compiled:json-java.jar:sqlite-jdbc-3.45.0.jar"  ProductService.ProductService config.json
     ;;
   -i)
     # Start ISCS

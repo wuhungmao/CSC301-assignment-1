@@ -99,19 +99,21 @@ public class OrderService {
             String ipAddress = orderServiceConfig.getString("ip");
             int port = orderServiceConfig.getInt("port");
 
+            /*For Http request*/
+            HttpServer userServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+
+            
+            OrderHandler newHandler = new OrderHandler();
+            //HttpServer server = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+            server.setExecutor(Executors.newFixedThreadPool(20));
+            
+            server.createContext("/order", newHandler);
+            server.start();
             System.out.println("OrderService IP Address: " + ipAddress);
             System.out.println("OrderService Port: " + port);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //Create order hadnler
-        OrderHandler newHandler = new OrderHandler();
-        //HttpServer server = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
-        HttpServer server = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
-        server.setExecutor(Executors.newFixedThreadPool(20));
-        
-        server.createContext("/order", newHandler);
-        server.start();
 
         //Need shutdown in new requirements, this is a hook that shutdowns the server
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
