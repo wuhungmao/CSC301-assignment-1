@@ -78,7 +78,7 @@ returns the following JSON in the response body.
 */
 
 public class UserService {
-    public static String jdbcUrl = "jdbc:sqlite:db/UserDatabase.db";
+    public static String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
@@ -115,25 +115,14 @@ public class UserService {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             requestCount++;
-            // Check if this is the first request
-            if (requestCount == 1){
-                if("POST".equals(exchange.getRequestMethod())) {
-                    JSONObject requestbody = getRequestBody(exchange);
-                    String command = requestbody.getString("command");
-                    if (!command.equals("restart")) {
-                        System.out.println("Creating new database");
-                        createNewDatabase();
-                    }
-                } else {
-                    System.out.println("Creating new database");
-                    createNewDatabase();
-                }
-            }
-
             // Handle POST request for /test
             if ("POST".equals(exchange.getRequestMethod())) {
                 JSONObject requestbody = getRequestBody(exchange);  
                 String command = requestbody.getString("command");
+                if (requestCount == 1 && !command.equals("restart")) {
+                    System.out.println("Creating new database");
+                    createNewDatabase();
+                }
                 if (command.equals("create")) 
                 {
                     try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
@@ -168,8 +157,6 @@ public class UserService {
                             // 23505 is the SQLState code for a unique constraint violation
                             int statusCode = 409;
                             JSONObject responseBody = new JSONObject();
-                            responseBody.put("error", "Conflict");
-                            responseBody.put("message", "The 'user_id' already exists.");
                             sendResponse(exchange, statusCode, responseBody.toString());
                         } else {
                             // Handle other SQL exceptions
@@ -301,19 +288,23 @@ public class UserService {
                     //Additional requirements
                     JSONObject responseBody = new JSONObject();
                     responseBody.put("command", command);
-                    sendResponse(exchange, 200, responseBody);
+                    sendResponse(exchange, 200, responseBody.toString());
 
                     System.out.println("User Server has been shut down gracefully.");
                     System.exit(0); // Exit the application
                 } else if (command.equals("restart")) {
                     JSONObject responseBody = new JSONObject();
                     responseBody.put("command", command);
-                    sendResponse(exchange, 200, responseBody);
+                    sendResponse(exchange, 200, responseBody.toString());
                     System.out.println("User Server has been restarted.");
                 }
             }
             // Handle Get request 
             else if("GET".equals(exchange.getRequestMethod())){
+                if (requestCount == 1) {
+                    System.out.println("Creating new database");
+                    createNewDatabase();
+                }
                 try {
                     // Extract user ID from the request URI
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
@@ -341,7 +332,6 @@ public class UserService {
                 while ((line = br.readLine()) != null) {
                     requestBody.append(line);
                 }
-
                 return new JSONObject(requestBody.toString());
             }
         }

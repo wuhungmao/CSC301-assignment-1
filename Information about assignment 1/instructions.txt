@@ -23,7 +23,6 @@ Important:
 -- ./runme.sh -o  --> starts the Order service
 -- ./runme.sh -w workloadfile --> starts the workload parser on the same machine as the order service
 
-
 WorkloadParser:
 A parser which reads a given workload file (samples are provided).
 You are encouraged to modify this workload file for your own testing.
@@ -58,7 +57,6 @@ POST Methods:
 --> Updates all fields that are present (username, email, password); 
 --> If fields are missing, only update the fields that are present. 
 (e.g., if no "password" is transmitted, then only update the username and email).
-
 
 {
     "command": "delete",
@@ -186,7 +184,6 @@ Sample ConfigFile:
 Note that all servers should be standalone (i.e., during testing the TAs should be able to start the UserService
 and send API requests directly to it). 
 
-
 Important: Approximately 1 week before the DUE date, an additional requirement is going to be released. 
     This requirement pertains to persistence (i.e., after a "shutdown" of all your code, a restart should contain the same information as before the restart; but also a command will be added to wipe all previous records). You will receive details a week before, much like in real life last minute changing requirements, however, since you are still "learning", consider this^ a hint so you can prepare a little bit.
 
@@ -234,7 +231,6 @@ justify your statements..
 --- you should all SSH into the labs and have multiple terminal open and start the services to make sure your compilation and start scripts are not relying on certain user permissions or paths that the TAs won't have.
 --- Do not assume your code is run in a hard coded directory, it could be run in literally any direcory. 
 
-
 How will we test and grade this:
 - Does your code compile? --> we will delete/move your compiled directory and use your runme.sh -c 
 ==> no warnings, no errors and all classes are produced ==> good
@@ -245,7 +241,6 @@ How will we test and grade this:
 -- We then run runme.sh -w ourownprivateworkloadfile.txt (some testing workload files) and check correctness and speed (max. 2 minutes)
 -- We then run runme.sh -w ourownprivateworkloadfile2.txt (some testing workload files) and check correctness and speed including the additional requirement of the shutdown/restart and data cleaning (i.e., the requirement introduced 1 week before the due date) (max. 2 minutes)
 -- 33.34% of your points will come from the writeup.pdf
-
 
 Considerations for A1 and A2:
 - In A1, we will only test it with at most 10 different users, 10 different products and at most 100 commands.
