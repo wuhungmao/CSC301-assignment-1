@@ -79,6 +79,7 @@ returns the following JSON in the response body.
 
 public class UserService {
     public static String jdbcUrl = "jdbc:sqlite:db/UserDatabase.db";
+    private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
         String configFile = args[0];
@@ -92,26 +93,6 @@ public class UserService {
             String ipAddress = userServiceConfig.getString("ip");
             int port = userServiceConfig.getInt("port");
 
-            // Open a connection
-            Connection connection = DriverManager.getConnection(jdbcUrl);
-                
-            //Before starting server, create User database
-            String createTableQuery = "CREATE TABLE IF NOT EXISTS User ("
-                        + "user_id INTEGER PRIMARY KEY,"
-                        + "username TEXT NOT NULL,"
-                        + "email TEXT NOT NULL,"
-                        + "password TEXT NOT NULL)";
-            try (Statement statement = connection.createStatement()) {
-                // Execute the query to create the User table
-                statement.executeUpdate(createTableQuery);
-                System.out.println("User table created successfully.");
-            } catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
-            
-            // Close the connection
-            connection.close();
-    
             /*For Http request*/
             HttpServer userServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
             // Example: Set a custom executor with a fixed-size thread pool
@@ -133,6 +114,22 @@ public class UserService {
     static class TestHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            requestCount++;
+            // Check if this is the first request
+            if (requestCount == 1){
+                if("POST".equals(exchange.getRequestMethod())) {
+                    JSONObject requestbody = getRequestBody(exchange);
+                    String command = requestbody.getString("command");
+                    if (!command.equals("restart")) {
+                        System.out.println("Creating new database");
+                        createNewDatabase();
+                    }
+                } else {
+                    System.out.println("Creating new database");
+                    createNewDatabase();
+                }
+            }
+
             // Handle POST request for /test
             if ("POST".equals(exchange.getRequestMethod())) {
                 JSONObject requestbody = getRequestBody(exchange);  
@@ -300,7 +297,20 @@ public class UserService {
                         int statusCode = 400;
                         sendResponse(exchange, statusCode, "");
                     }
-                }                
+                } else if (command.equals("shutdown")) {
+                    //Additional requirements
+                    JSONObject responseBody = new JSONObject();
+                    responseBody.put("command", command);
+                    sendResponse(exchange, 200, responseBody);
+
+                    System.out.println("User Server has been shut down gracefully.");
+                    System.exit(0); // Exit the application
+                } else if (command.equals("restart")) {
+                    JSONObject responseBody = new JSONObject();
+                    responseBody.put("command", command);
+                    sendResponse(exchange, 200, responseBody);
+                    System.out.println("User Server has been restarted.");
+                }
             }
             // Handle Get request 
             else if("GET".equals(exchange.getRequestMethod())){
@@ -447,6 +457,40 @@ public class UserService {
             } catch (NoSuchAlgorithmException e) {
                 // Handle the exception (e.g., log, print, or perform error handling)
                 throw new RuntimeException("Error hashing password: " + e.getMessage());
+            }
+        }
+        
+        private static void createNewDatabase() {
+            File databaseFile = new File("db/UserDatabase.db");
+        
+            // Check if the database file exists
+            if (databaseFile.exists()) {
+                // Delete the existing database file
+                if (databaseFile.delete()) {
+                    System.out.println("Existing database deleted successfully.");
+                } else {
+                    System.out.println("Failed to delete the existing database.");
+                }
+            }
+            try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                // Create the Product table in the new database
+                                    
+                //Before starting server, create User database
+                String createTableQuery = "CREATE TABLE IF NOT EXISTS User ("
+                            + "user_id INTEGER PRIMARY KEY,"
+                            + "username TEXT NOT NULL,"
+                            + "email TEXT NOT NULL,"
+                            + "password TEXT NOT NULL)";
+                
+                try (Statement statement = connection.createStatement()) {
+                    // Execute the query to create the User table
+                    statement.executeUpdate(createTableQuery);
+                    System.out.println("User table created successfully.");
+                } catch (SQLException sqle) {
+                    System.out.println("Error creating User table: " + sqle.getMessage());
+                }
+            } catch (SQLException e) {
+                System.out.println("Error creating new database: " + e.getMessage());
             }
         }
     
