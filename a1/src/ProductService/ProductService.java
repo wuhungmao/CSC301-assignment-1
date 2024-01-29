@@ -33,7 +33,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class ProductService {
-    static String jdbcUrl = "jdbc:sqlite:../../db/ProductDatabase.db";
+    static String jdbcUrl = "jdbc:sqlite:db/ProductDatabase.db";
+    
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
         String configFile = args[0];
@@ -67,7 +68,7 @@ public class ProductService {
                 statement.executeUpdate(createTableQuery);
                 System.out.println("Product table created successfully.");
             } catch (SQLException sqle) {
-                System.out.println("You fuck up at the beginning");
+                System.out.println("You screw up at the beginning");
                 // sqle.printStackTrace();
             }
             
@@ -153,7 +154,7 @@ public class ProductService {
                         }
 
                     } catch (SQLException e) {
-                        System.out.println("You fuck up at post create");
+                        System.out.println("You screw up at post create");
                         // e.printStackTrace();
                     } catch (JSONException e) {
                         System.out.println("Status code 400 in post create");
@@ -226,7 +227,7 @@ public class ProductService {
                             System.out.println("No product found with the specified ID.");
                         }
                     } catch (SQLException e) {
-                        System.out.println("you fuck up at post update");
+                        System.out.println("you screw up at post update");
                         // e.printStackTrace();
                     }
                 } else if (command.equals("delete")) {
@@ -280,7 +281,7 @@ public class ProductService {
                             sendResponse(exchange, statusCode, "");
                         }
                     } catch (SQLException e) {
-                        System.out.println("you fuck up at post delete");
+                        System.out.println("you screw up at post delete");
                         // e.printStackTrace();
                     } catch (JSONException e) {
                         System.out.println("status code 400 at post delete");
@@ -369,7 +370,7 @@ public class ProductService {
                     preparedStatement.close();
 
                 } catch (SQLException e) {
-                    System.out.println("fuck up with get method in create response");
+                    System.out.println("screw up with get method in create response");
                     // e.printStackTrace();
                 }
                 return null; // Return null if there's an error or if the user is not found
@@ -413,7 +414,7 @@ public class ProductService {
                         preparedStatement.close();
             
                     } catch (SQLException e) {
-                        System.out.println("fuck up at create response post method with create/update");
+                        System.out.println("screw up at create response post method with create/update");
                         // e.printStackTrace();
                     }
                 } else {

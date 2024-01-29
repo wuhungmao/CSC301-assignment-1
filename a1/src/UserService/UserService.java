@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 
 //import JSONObject
 import org.json.JSONObject;
-
+import org.json.JSONException;
 //Database
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -78,7 +78,7 @@ returns the following JSON in the response body.
 */
 
 public class UserService {
-    public static String jdbcUrl = "jdbc:sqlite:../../db/UserDatabase.db"; 
+    public static String jdbcUrl = "jdbc:sqlite:db/UserDatabase.db";
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
         String configFile = args[0];
@@ -167,7 +167,17 @@ public class UserService {
                         }
 
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        if (e.getSQLState().equals("23505")) {
+                            // 23505 is the SQLState code for a unique constraint violation
+                            int statusCode = 409;
+                            JSONObject responseBody = new JSONObject();
+                            responseBody.put("error", "Conflict");
+                            responseBody.put("message", "The 'user_id' already exists.");
+                            sendResponse(exchange, statusCode, responseBody.toString());
+                        } else {
+                            // Handle other SQL exceptions
+                            e.printStackTrace();
+                        }
                     } catch (JSONException e) {
                         int statusCode = 400;
                         sendResponse(exchange, statusCode, "");
@@ -295,7 +305,6 @@ public class UserService {
             // Handle Get request 
             else if("GET".equals(exchange.getRequestMethod())){
                 try {
-                    JSONObject requestbody = getRequestBody(exchange);
                     // Extract user ID from the request URI
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
                     int id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
