@@ -47,7 +47,7 @@ case "$1" in
 
     # Compile OrderService.java (Adjust the path accordingly)
     #javac -cp "$classpath" src/OrderService.java
-    javac -cp "$.:json-java.jar:sqlite-jdbc-3.45.0.jar" src/OrderService.java
+    javac -classpath ".:json-java.jar:sqlite-jdbc-3.45.0.jar" -d compiled src/OrderService/OrderService 
     ;;
   -u)
     # Start User service
@@ -63,7 +63,7 @@ case "$1" in
     ;;
   -o)
     # Start Order service
-    java OrderService config.json
+    java -classpath "compiled:json-java.jar:sqlite-jdbc-3.45.0.jar" OrderService.OrderService config.json
     ;;
   -w)
     # Start Workload parser with specified workload file
