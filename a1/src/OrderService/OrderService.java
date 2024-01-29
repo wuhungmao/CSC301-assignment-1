@@ -71,13 +71,29 @@ public class OrderService {
 
     //Shutdown Signals
     public static int workRunning = 0;
+    public static String userURL = "";
+    public static String productURL = "";
 
     public static void main(String[] args) throws IOException {
-        /*
+        
+        // Read the JSON configuration file
+        String configFile = args[0];
         try{
+            String configContent = new String(Files.readAllBytes(Paths.get(configFile)));
 
-            String configFilePath = "/a1/config.json";
-            JSONObject orderServiceConfig = getIPAddressFromConfig(configFilePath);
+            JSONObject config = new JSONObject(configContent);
+            JSONObject orderServiceConfig = config.getJSONObject("OrderService");
+            
+            JSONObject productServiceConfig = config.getJSONObject("ProductService");
+            String productServiceIP = productServiceConfig.getString("ip"); 
+            String productPort = productServiceConfig.getString("port"); 
+
+            JSONObject userServiceConfig = config.getJSONObject("UserService");
+            String userServiceIP = userServiceConfig.getString("ip"); 
+            String userPort = userServiceConfig.getString("port"); 
+
+            productURL = "http://" + productServiceIP + ":" + productPort;
+            userURL = "http://" + userServiceIP + ":" + userPort;
 
             // Extract IP address and port
             String ipAddress = orderServiceConfig.getString("ip");
@@ -85,15 +101,13 @@ public class OrderService {
 
             System.out.println("OrderService IP Address: " + ipAddress);
             System.out.println("OrderService Port: " + port);
-
-
         } catch (IOException e) {
             e.printStackTrace();
-        }*/
+        }
         //Create order hadnler
         OrderHandler newHandler = new OrderHandler();
         //HttpServer server = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
-        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
         server.setExecutor(Executors.newFixedThreadPool(20));
         
         server.createContext("/order", newHandler);
@@ -110,11 +124,17 @@ public class OrderService {
     static class OrderHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            JSONObject requestBody = getRequestBody(exchange);
+            String command = requestBody.getString("command");
             if("POST".equals((exchange.getRequestMethod()))) {
-                processOrder(exchange);
+                if("place".equals(command) == true){
+                    processOrder(exchange);
+                }else if("create".equals(command) || "update".equals(command) || "delete".equals(command)){
+                    JSONObject forwardRequest = getRequestBody(exchange);
+                    forwardRequest(userURL, forwardRequest);
+                }
             } else {
-                exchange.sendResponseHeaders(400, 0);
-                exchange.close();
+                forwardGetRequest(userURL);
             }
         }
     }
@@ -334,13 +354,52 @@ public class OrderService {
 
         System.out.println("Server shut down.");
     }
-    //Send Response
-    private static void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
-        exchange.sendResponseHeaders(statusCode, response.length());
-        OutputStream os = exchange.getResponseBody();
-        os.write(response.getBytes(StandardCharsets.UTF_8));
-        os.close();
+    public static String forwardRequest(String targetURL, JSONObject jsonData) throws IOException {
+        //Send Response forward
+        URL url = new URL(targetURL);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/json; utf-8");
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setDoOutput(true);
+
+        try (OutputStream os = connection.getOutputStream()) {
+            byte[] input = jsonData.toString().getBytes(StandardCharsets.UTF_8);
+            os.write(input, 0, input.length);
+        }
+
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+            StringBuilder response = new StringBuilder();
+            String responseLine;
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine.trim());
+            }
+            return response.toString();
+        } finally {
+            connection.disconnect();
+        }
     }
 
+    public static String forwardGetRequest(String targetURL) throws IOException {
+        URL url = new URL(targetURL);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Accept", "application/json");
+    
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+            StringBuilder response = new StringBuilder();
+            String responseLine;
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine.trim());
+            }
+            return response.toString();
+        } finally {
+            connection.disconnect();
+        }
+    }
 
 }
