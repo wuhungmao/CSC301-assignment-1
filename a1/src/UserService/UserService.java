@@ -78,7 +78,7 @@ returns the following JSON in the response body.
 */
 
 public class UserService {
-    public static String jdbcUrl = "jdbc:sqlite:db/UserDatabase.db";
+    public static String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file

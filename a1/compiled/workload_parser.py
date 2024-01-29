@@ -1,6 +1,19 @@
 import requests
 import json
 import sys  # Import sys module to access command-line arguments
+import socket
+
+def get_order_service_port():
+    try:
+        with open("../config.json", 'r') as config_file:
+            config_data = json.load(config_file)
+            return config_data["OrderService"]["port"]
+    except FileNotFoundError:
+        print("Error: Config file 'config.json' not found.")
+        sys.exit(1)
+    except json.JSONDecodeError:
+        print("Error: Unable to parse 'config.json'. Check its format.")
+        sys.exit(1)
 
 def process_line(line, order_service_url):
     # Parse information from the line
@@ -17,7 +30,7 @@ def process_line(line, order_service_url):
 
     if serviceType == "USER":
         command = parts[1]
-        if command == "create":
+        if command == "create": 
             id = parts[2]
             username = parts[3]
             email = parts[4]
@@ -193,15 +206,19 @@ def process_line(line, order_service_url):
     else:
         print("Invalid service:", serviceType)
 
-if len(sys.argv) != 4:
-    print("Usage: python script.py <IP_address_of_Order_service> <port_number_of_Order_service> <workload_file_name>")
+if len(sys.argv) != 1:
+    print("Usage: python workload_parser.py <workload_file_name>")
     sys.exit(1)
 
-ip_address = sys.argv[1]
-port_number = sys.argv[2]
-workload_file = sys.argv[3]
+port_number = get_order_service_port()
+workload_file = sys.argv[1]
+
+# Get the IP address of the current machine
+ip_address = socket.gethostbyname(socket.gethostname())
 
 order_service_url = f"http://{ip_address}:{port_number}"
+
+print(order_service_url)
 
 try:
     with open(workload_file, 'r') as file:
