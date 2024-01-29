@@ -1,3 +1,5 @@
+package OrderService;
+
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
@@ -29,6 +31,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.io.IOException;
 
+
+//import JSONObject
+import org.json.JSONObject;
 
 /*
 Order Service:
@@ -68,7 +73,9 @@ public class OrderService {
     public static int workRunning = 0;
 
     public static void main(String[] args) throws IOException {
-        try{            
+        /*
+        try{
+
             String configFilePath = "/a1/config.json";
             JSONObject orderServiceConfig = getIPAddressFromConfig(configFilePath);
 
@@ -78,9 +85,11 @@ public class OrderService {
 
             System.out.println("OrderService IP Address: " + ipAddress);
             System.out.println("OrderService Port: " + port);
+
+
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
         //Create order hadnler
         OrderHandler newHandler = new OrderHandler();
         //HttpServer server = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
@@ -102,16 +111,7 @@ public class OrderService {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             if("POST".equals((exchange.getRequestMethod()))) {
-                JSONObject requestBody = getRequestBody(exchange);
-                
-                System.out.println("request: " + requestBody);
-                processOrder(requestBody, exchange);
-                
-                String response = "Order processed";
-                exchange.sendResponseHeaders(200, requestBody.toString().getBytes().length);
-                OutputStream os = exchange.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
+                processOrder(exchange);
             } else {
                 exchange.sendResponseHeaders(400, 0);
                 exchange.close();
@@ -120,75 +120,82 @@ public class OrderService {
     }
 
     //If order is place go inside of this body. 
-    public static void processOrder(JSONObject requestBody, HttpExchange exchange) throws IOException {
-        System.out.println("json sent: " + requestBody.getString("command"));
-        try{
+    public static void processOrder(HttpExchange exchange) throws IOException {
+        JSONObject responseToClient = new JSONObject();
+        JSONObject requestBody = getRequestBody(exchange);
+        String command = requestBody.getString("command");
+
+        try {
             workRunning++;
-        if(requestBody.getString("command") != null){
-            String command = requestBody.getString("command");
-            //Check if order is placed or return null
-            if ("place".equals(command)) {
-                //Make sure the JSON is of correct format with user id product id and qunatity
-                if (requestBody.getString("user_id") != null && requestBody.getString("product_id") != null && requestBody.getString("quantity") != null) {
-                    String userId = requestBody.getString("user_id");
+            if ("place".equals(command) == true) {
+                if(requestBody.has("user_id") && requestBody.has("product_id") && requestBody.has("quantity")) {
+                    int userId = requestBody.getInt("user_id");
                     int productId = requestBody.getInt("product_id");
                     int quantity = requestBody.getInt("quantity");
-                    
-                    try {
-                            Connection connection = DriverManager.getConnection("jdbc:sqlite:ProductDatabase.db");
-                            String selectQuery = "SELECT * FROM Product WHERE productId = ?";
-                            PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
-                            preparedStatement.setInt(1, productId);
-            
-                            ResultSet resultSet = preparedStatement.executeQuery();
 
-                            if (resultSet.next()) {
-                                String product_id = resultSet.getString("product_id");
-                                String user_id = resultSet.getString("user_id");
-                                Integer id = resultSet.getInt("id");
-                                Integer count = resultSet.getInt("quantity");
-                
-                                // Return 409 if the amount inside database is less than quantity asked
-                                if(count < quantity){
-                                    JSONObject responseBody = new JSONObject()
+                    //Make sure the JSON is of correct format with user id product id and qunatity
+
+                    Connection connection = DriverManager.getConnection("jdbc:sqlite:ProductDatabase.db");
+                    String selectQuery = "SELECT * FROM Product WHERE productId = ?";
+                    PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
+                    preparedStatement.setInt(1, productId);
+
+                    ResultSet resultSet = preparedStatement.executeQuery();
+
+                    if (resultSet.next()) {
+                        System.out.println("flag1");
+                        String product_id = resultSet.getString("product_id");
+                        String user_id = resultSet.getString("user_id");
+                        Integer id = resultSet.getInt("id");
+                        Integer count = resultSet.getInt("quantity");
+
+                        // Return 409 if the amount inside database is less than quantity asked
+                        if (count < quantity) {
+                            System.out.println("flag2");
+                            responseToClient
                                     .put("id", id)
                                     .put("product_id", product_id)
                                     .put("user_id", user_id)
                                     .put("quantity", count)
                                     .put("status", "Exceeded quantity limit");
-                                }else{
-                                    //Else, if no sql error and count is bigger or equal, we can process the order
-                                    JSONObject responseBody = new JSONObject()
-                                        .put("id", id)
-                                        .put("product_id", product_id)
-                                        .put("user_id", user_id)
-                                        .put("quantity", count)
-                                        .put("status", "Success");
-                                }
-                                
-                            }
-                            //Close
-                            resultSet.close();
-                            preparedStatement.close();
-                            connection.close();
-
-                            System.out.println("User ID: " + userId);
-                            System.out.println("Product ID: " + productId);
-                            System.out.println("Quantity: " + quantity);
-                    }catch (SQLException e) {
-                        //Return 404, since sqlException either user_id or product_id not found
-                        JSONObject responseBody = new JSONObject()
-                        .put("status", "Invalid Reques");
+                        } else {
+                            System.out.println("flag3");
+                            //Else, if no sql error and count is bigger or equal, we can process the order
+                            responseToClient
+                                    .put("id", id)
+                                    .put("product_id", product_id)
+                                    .put("user_id", user_id)
+                                    .put("quantity", count)
+                                    .put("status", "Success");
+                        }
                     }
+                    System.out.println("flag4");
+                    //Close
+                    resultSet.close();
+                    preparedStatement.close();
+                    connection.close();
+
+                    System.out.println("User ID: " + userId);
+                    System.out.println("Product ID: " + productId);
+                    System.out.println("Quantity: " + quantity);
+
+                }else{
+                    responseToClient
+                            .put("status", "Invalid Request");
+                    sendResponse(exchange, 400, responseToClient.toString());
                 }
             }
+        }catch (SQLException e) {
+                System.out.println("flag4");
+                //Return 404, since sqlException either user_id or product_id not found
+                responseToClient
+                        .put("status", "Invalid Request");
+        }finally{
+            workRunning--;
         }
-    }finally{
-        workRunning--;
-    }
-
-        String response = "Order processed";
-        exchange.sendResponseHeaders(200, response.getBytes().length);
+        System.out.println("flag2");
+        String response = responseToClient.toString();
+        exchange.sendResponseHeaders(400, response.getBytes().length);
         OutputStream os = exchange.getResponseBody();
         os.write(response.getBytes());
         os.close();
@@ -327,7 +334,13 @@ public class OrderService {
 
         System.out.println("Server shut down.");
     }
-
+    //Send Response
+    private static void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
+        exchange.sendResponseHeaders(statusCode, response.length());
+        OutputStream os = exchange.getResponseBody();
+        os.write(response.getBytes(StandardCharsets.UTF_8));
+        os.close();
+    }
 
 
 }
