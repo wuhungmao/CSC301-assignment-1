@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 
 //import JSONObject
 import org.json.JSONObject;
+import org.json.JSONException;
 
 //Database
 import java.sql.Connection;
@@ -30,33 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-/*
-Product Service:
-This must be written in Java.
-Implement a product microservice responsible for managing products in an e-commerce system.
-Products should have attributes such as id, name, description, price, and quantity in stock.
-Provide endpoints for product creation, updating, info, and deletion.
-API endpoint: /product
-POST Methods: 
-{
-    "command": "create/update/delete",
-    "id": 23823,
-    "productname": "productname-32843hnksjn4398",
-    "price": 3.99 ,
-    "quantity": 9
-}
-==> Creates update, delete work identical to the methods for /user. 
- 
-GET method: 
-/product/23823
-if the product with this ID exists, service will return the following JSON in the response body 
-{
-    "id": 23823,
-    "productname": "productname-32843hnksjn4398",
-    "price": 3.99 ,
-    "quantity": 9
-}
-*/
+
 public class ProductService {
     static String jdbcUrl = "jdbc:sqlite:/student/wuhungma/Desktop/a1/db/ProductDatabase.db";
     public static void main(String[] args) throws IOException, SQLException {
@@ -92,7 +67,8 @@ public class ProductService {
                 statement.executeUpdate(createTableQuery);
                 System.out.println("Product table created successfully.");
             } catch (SQLException sqle) {
-                sqle.printStackTrace();
+                System.out.println("You fuck up at the beginning");
+                // sqle.printStackTrace();
             }
             
             // Close the connection
@@ -119,44 +95,44 @@ public class ProductService {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             if ("POST".equals(exchange.getRequestMethod())) {
-                {
-                    // For debugging purposes
-                    // String clientAddress = exchange.getRemoteAddress().getAddress().toString();
-                    // String requestMethod = exchange.getRequestMethod();
-                    // String requestURI = exchange.getRequestURI().toString();
-                    // Map<String, List<String>> requestHeaders = exchange.getRequestHeaders();
-
-                    // System.out.println("Client Address: " + clientAddress);
-                    // System.out.println("Request Method: " + requestMethod);
-                    // System.out.println("Request URI: " + requestURI);
-                    // System.out.println("Request Headers: " + requestHeaders);
-                    // Print all request headers
-                    // for (Map.Entry<String, List<String>> header : requestHeaders.entrySet()) {
-                    //     System.out.println(header.getKey() + ": " + header.getValue().getFirst());
-                    // }
-                }
-
                 JSONObject requestbody = getRequestBody(exchange);
-                
-                /* Get values */
-
                 String command = requestbody.getString("command");
-                
-                if (command.equals("create")) 
-                {
-                    /*create new product */
-                    try {
-                        //Get body parameters
+                if (command.equals("create")) {
+                    /* create new product */
+                    try  (Connection connection = DriverManager.getConnection(jdbcUrl)){
+                        // Get body parameters
                         int id_int = requestbody.getInt("id");
                         String id = String.valueOf(id_int);
                         String productName = requestbody.getString("name");
                         String description = requestbody.getString("description");
                         double price_double = requestbody.getDouble("price");
-                        // String price = String.valueOf(price_int);
                         int quantity_int = requestbody.getInt("quantity");
-                        // String quantity = String.valueOf(quantity_int);
-
-                        Connection connection = DriverManager.getConnection(jdbcUrl);             
+                
+                        // Check for negative quantity or price
+                        if (quantity_int < 0 || price_double < 0) {
+                            int statusCode = 400; // Bad Request
+                            sendResponse(exchange, statusCode, "");
+                            return;
+                        }
+                
+                        // Check for duplicate ID
+                        String checkDuplicateQuery = "SELECT * FROM Product WHERE productId = ?";
+                        PreparedStatement checkDuplicateStatement = connection.prepareStatement(checkDuplicateQuery);
+                        checkDuplicateStatement.setInt(1, id_int);
+                        ResultSet duplicateResultSet = checkDuplicateStatement.executeQuery();
+                
+                        if (duplicateResultSet.next()) {
+                            // Duplicate ID found
+                            int statusCode = 409; // Conflict
+                            sendResponse(exchange, statusCode, "");
+                            return;
+                        }
+                
+                        // Close resources for duplicate check
+                        duplicateResultSet.close();
+                        checkDuplicateStatement.close();
+                
+                        // Continue with insertion
                         String insertQuery = "INSERT INTO Product (productId, productName, description, price, quantity) VALUES (?, ?, ?, ?, ?)";
                         PreparedStatement preparedStatement = connection.prepareStatement(insertQuery);
                         preparedStatement.setInt(1, id_int);
@@ -166,106 +142,177 @@ public class ProductService {
                         preparedStatement.setInt(5, quantity_int);
                         int rowsAffected = preparedStatement.executeUpdate();
                         preparedStatement.close();
-                        connection.close();
-
-                        JSONObject responseBody = createResponse(exchange, requestbody, id, id_int, productName, description, price_double, quantity_int);
-                        
-                        //Put in all information that needs to be sent to the client
+                
+                        JSONObject responseBody = createResponse(exchange, command, id_int);
+                
+                        // Put in all information that needs to be sent to the client
                         int statusCode = 200;
                         sendResponse(exchange, statusCode, responseBody.toString());
-                        
                         if (rowsAffected > 0) {
-                            System.out.println("Product information updated successfully.");
-                        } 
-
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-                else if (command.equals("update")) 
-                {
-                    /*update product */
-                    try {
-                        //Get body parameters
-                        int id_int = requestbody.getInt("id");
-                        String id = String.valueOf(id_int);
-                        String productName = requestbody.getString("name");
-                        String description = requestbody.getString("description");
-                        double price_double = requestbody.getDouble("price");
-                        // String price = String.valueOf(price_int);
-                        int quantity_int = requestbody.getInt("quantity");
-                        // String quantity = String.valueOf(quantity_int);
-
-                        Connection connection = DriverManager.getConnection(jdbcUrl);             
-                        String updateQuery = "UPDATE Product SET productName = ?, description = ?, price = ?, quantity = ? WHERE productId = ?";
-                        PreparedStatement preparedStatement = connection.prepareStatement(updateQuery);
-                        preparedStatement.setString(1, productName);
-                        preparedStatement.setString(2, description);
-                        preparedStatement.setDouble(3, price_double);
-                        preparedStatement.setInt(4, quantity_int);
-                        preparedStatement.setInt(5, id_int);
-
-                        int rowsAffected = preparedStatement.executeUpdate();
-                        preparedStatement.close();
-                        connection.close();
-
-                        JSONObject responseBody = createResponse(exchange, requestbody, id, id_int, productName, description, price_double, quantity_int);
-                        //Put in all information that needs to be sent to the client
-                        int statusCode = 200;
-                        sendResponse(exchange, statusCode, responseBody.toString());
-                        
-                        if (rowsAffected > 0) {
-                            System.out.println("Product information updated successfully.");
-                        } else {
-                            System.out.println("No product found with the specified ID.");
+                            System.out.println("Product information created successfully.");
                         }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                } 
-                else if (command.equals("delete")) 
-                {
-                    /* delete product */
-                    try 
-                    {
-                        int id_int = requestbody.getInt("id");
-                        String id = String.valueOf(id_int);
 
-                        Connection connection = DriverManager.getConnection(jdbcUrl);
-                        String deleteQuery = "DELETE FROM Product WHERE productId = ?";
-                        PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery);
-                        preparedStatement.setInt(1, id_int);
+                    } catch (SQLException e) {
+                        System.out.println("You fuck up at post create");
+                        // e.printStackTrace();
+                    } catch (JSONException e) {
+                        System.out.println("Status code 400 in post create");
+                        int statusCode = 400;
+                        sendResponse(exchange, statusCode, "");
+                    }
+                } else if (command.equals("update")) {
+                    /* update product */
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                        // Get body parameters
+                        int id_int = requestbody.getInt("id");
+
+                        // Build the dynamic part of the UPDATE query based on provided attributes
+                        StringBuilder updateQueryBuilder = new StringBuilder("UPDATE Product SET ");
+                        List<String> setClauses = new ArrayList<>();
+                
+                        if (requestbody.has("name")) {
+                            setClauses.add("productName = ?");
+                        }
+                        if (requestbody.has("description")) {
+                            setClauses.add("description = ?");
+                        }
+                        if (requestbody.has("price")) {
+                            setClauses.add("price = ?");
+                        }
+                        if (requestbody.has("quantity")) {
+                            setClauses.add("quantity = ?");
+                        }
+                
+                        // Combine the set clauses
+                        updateQueryBuilder.append(String.join(", ", setClauses));
+                
+                        // Add the WHERE clause to identify the product by ID
+                        updateQueryBuilder.append(" WHERE productId = ?");
+                
+                        // Create the prepared statement
+                        PreparedStatement preparedStatement = connection.prepareStatement(updateQueryBuilder.toString());
+                
+                        // Set values for each attribute
+                        int parameterIndex = 1;
+                        if (requestbody.has("name")) {
+                            preparedStatement.setString(parameterIndex++, requestbody.getString("name"));
+                        }
+                        if (requestbody.has("description")) {
+                            preparedStatement.setString(parameterIndex++, requestbody.getString("description"));
+                        }
+                        if (requestbody.has("price")) {
+                            preparedStatement.setDouble(parameterIndex++, requestbody.getDouble("price"));
+                        }
+                        if (requestbody.has("quantity")) {
+                            preparedStatement.setInt(parameterIndex++, requestbody.getInt("quantity"));
+                        }
+                
+                        // Set the productId for the WHERE clause
+                        preparedStatement.setInt(parameterIndex, id_int);
+                
                         int rowsAffected = preparedStatement.executeUpdate();
                         preparedStatement.close();
-                        connection.close();
+                
+                        /* Create response JSON */
+                
+                        // Put in all information that needs to be sent to the client
+                        JSONObject responseBody = createResponse(exchange, command, id_int);
+                        int statusCode = (rowsAffected > 0) ? 200 : 404; // 404 if no product found
+                        sendResponse(exchange, statusCode, responseBody.toString());
                 
                         if (rowsAffected > 0) {
-                            System.out.println("Product deleted successfully.");
+                            System.out.println("Product information updated successfully.");
                         } else {
                             System.out.println("No product found with the specified ID.");
                         }
-                        JSONObject responseBody = createResponse(exchange, requestbody, id, id_int, "", "", 0, 0);
-                        //Put in all information that needs to be sent to the client
-                        int statusCode = 200;
-                        sendResponse(exchange, statusCode, responseBody.toString());
-                        
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        System.out.println("you fuck up at post update");
+                        // e.printStackTrace();
+                    }
+                } else if (command.equals("delete")) {
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                        int id_int = requestbody.getInt("id");
+                        String productName = requestbody.getString("name");
+                        String description = requestbody.getString("description");
+                        double price = requestbody.getDouble("price");
+                        int quantity = requestbody.getInt("quantity");
+                
+                        String selectQuery = "SELECT * FROM Product WHERE productId = ? AND productName = ? AND description = ? AND price = ? AND quantity = ?";
+                        PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+                        selectStatement.setInt(1, id_int);
+                        selectStatement.setString(2, productName);
+                        selectStatement.setString(3, description);
+                        selectStatement.setDouble(4, price);
+                        selectStatement.setInt(5, quantity);
+                
+                        ResultSet resultSet = selectStatement.executeQuery();
+                
+                        if (resultSet.next()) {
+                            // Valid credentials, proceed with deletion
+                            resultSet.close();
+                            selectStatement.close();
+                
+                            String deleteQuery = "DELETE FROM Product WHERE productId = ?";
+                            PreparedStatement deleteStatement = connection.prepareStatement(deleteQuery);
+                            deleteStatement.setInt(1, id_int);
+                
+                            int rowsAffected = deleteStatement.executeUpdate();
+                            deleteStatement.close();
+                
+                            /* Create response JSON */
+                            // Put in all information that needs to be sent to the client
+                            JSONObject responseBody = createResponse(exchange, command, id_int);
+                
+                            int statusCode = (rowsAffected > 0) ? 200 : 404; // 404 if no product found
+                            sendResponse(exchange, statusCode, responseBody.toString());
+                
+                            if (rowsAffected > 0) {
+                                System.out.println("Product deleted successfully.");
+                            } else {
+                                System.out.println("No product found with the specified ID.");
+                            }
+                        } else {
+                            // Invalid credentials, send 401 Unauthorized
+                            resultSet.close();
+                            selectStatement.close();
+                
+                            int statusCode = 401;
+                            sendResponse(exchange, statusCode, "");
+                        }
+                    } catch (SQLException e) {
+                        System.out.println("you fuck up at post delete");
+                        // e.printStackTrace();
+                    } catch (JSONException e) {
+                        System.out.println("status code 400 at post delete");
+                        int statusCode = 400;
+                        sendResponse(exchange, statusCode, "");
                     }
                 }
-
             }
             // Handle Get request 
             else if("GET".equals(exchange.getRequestMethod())){
-                JSONObject requestbody = getRequestBody(exchange);
-                int id_int = requestbody.getInt("id");
-                String id = String.valueOf(id_int);
+                // System.out.println("In get method");
+                try{
+                    // System.out.println("error 1");
+                    // Extract product ID from the request URI
+                    // System.out.println("error 1");
+                    String[] pathSegments = exchange.getRequestURI().getPath().split("/");
+                    // System.out.println("error 2");
 
-                //Get user information
-                JSONObject responseBody = createResponse(exchange, requestbody, id, id_int, "", "", 0, 0);
-
-                int statusCode = 200;
-                sendResponse(exchange, statusCode, responseBody.toString());
+                    int id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
+                    // System.out.println("error 3");
+        
+                    // Get product information
+                    JSONObject responseBody = createResponse(exchange, "", id_int);
+            
+                    int statusCode = 200;
+                    sendResponse(exchange, statusCode, responseBody.toString());
+                } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                    System.out.println("status code 400 at get");
+                    // Handle invalid or missing product ID in the URL
+                    int statusCode = 400;
+                    sendResponse(exchange, statusCode, "");
+                }
             }
         }
         
@@ -283,70 +330,100 @@ public class ProductService {
             }
         }
 
-    private static JSONObject createResponse(HttpExchange exchange, JSONObject requestBody,
-        String id, Integer id_int, String productName, String description, double price_double, int quantity_int) {
-        if ("GET".equals(exchange.getRequestMethod())) {
-            try {
-                Connection connection = DriverManager.getConnection(jdbcUrl);
-                String selectQuery = "SELECT * FROM Product WHERE productId = ?";
-                PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
-                preparedStatement.setInt(1, id_int);
+        private static JSONObject createResponse(HttpExchange exchange, String command, Integer id_int) {
 
-                ResultSet resultSet = preparedStatement.executeQuery();
-                if (resultSet.next()) {
-                    // Fetch user details from the result set
-                    String productName_get = resultSet.getString("productName");
-                    String description_get = resultSet.getString("description");
-                    double price_get = resultSet.getDouble("price");
-                    Integer quantity_get = resultSet.getInt("quantity");
+            if ("GET".equals(exchange.getRequestMethod())) {
+                try (Connection connection = DriverManager.getConnection(jdbcUrl)) {    
+                    String selectQuery = "SELECT * FROM Product WHERE productId = ?";
+                    PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
+                    preparedStatement.setInt(1, id_int);
 
-                    // Create a JSONObject with the fetched user details
-                    JSONObject responseBody = new JSONObject()
-                            .put("id", id)
-                            .put("name", productName_get)
-                            .put("description", description_get)
-                            .put("price", price_get)
-                            .put("quantity", quantity_get);
+                    ResultSet resultSet = preparedStatement.executeQuery();
+                    if (resultSet.next()) {
+                        // Fetch user details from the result set
+                        String productName_get = resultSet.getString("productName");
+                        String description_get = resultSet.getString("description");
+                        double price_get = resultSet.getDouble("price");
+                        Integer quantity_get = resultSet.getInt("quantity");
+
+                        // Create a JSONObject with the fetched user details
+                        JSONObject responseBody = new JSONObject()
+                                .put("id", id_int)
+                                .put("name", productName_get)
+                                .put("description", description_get)
+                                .put("price", price_get)
+                                .put("quantity", quantity_get);
+
+                        // Close resources
+                        resultSet.close();
+                        preparedStatement.close();
+
+                        return responseBody;
+                    } else {
+                        // User not found
+                        System.out.println("No user found with the specified ID.");
+                    }
 
                     // Close resources
                     resultSet.close();
                     preparedStatement.close();
-                    connection.close();
 
-                    return responseBody;
-                } else {
-                    // User not found
-                    System.out.println("No user found with the specified ID.");
+                } catch (SQLException e) {
+                    System.out.println("fuck up with get method in create response");
+                    // e.printStackTrace();
                 }
+                return null; // Return null if there's an error or if the user is not found
 
-                // Close resources
-                resultSet.close();
-                preparedStatement.close();
-                connection.close();
-
-            } catch (SQLException e) {
-                e.printStackTrace();
+            } else if ("POST".equals(exchange.getRequestMethod())) {
+                if (!command.equals("delete")) {
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                        System.out.println("Inside create response");
+                        String selectQuery = "SELECT * FROM Product WHERE productId = ?";
+                        PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
+                        preparedStatement.setInt(1, id_int);
+            
+                        ResultSet resultSet = preparedStatement.executeQuery();
+                        if (resultSet.next()) {
+                            // Fetch product details from the result set
+                            String productName = resultSet.getString("productName");
+                            String description = resultSet.getString("description");
+                            double price = resultSet.getDouble("price");
+                            int quantity = resultSet.getInt("quantity");
+            
+                            // Create a JSONObject with the fetched product details
+                            JSONObject responseBody = new JSONObject()
+                                    .put("id", id_int)
+                                    .put("name", productName)
+                                    .put("description", description)
+                                    .put("price", price)
+                                    .put("quantity", quantity);
+            
+                            // Close resources
+                            resultSet.close();
+                            preparedStatement.close();
+            
+                            return responseBody;
+                        } else {
+                            // Product not found
+                            System.out.println("No product found with the specified ID.");
+                        }
+            
+                        // Close resources
+                        resultSet.close();
+                        preparedStatement.close();
+            
+                    } catch (SQLException e) {
+                        System.out.println("fuck up at create response post method with create/update");
+                        // e.printStackTrace();
+                    }
+                } else {
+                    // delete command requires an empty response
+                    return new JSONObject();
+                }
             }
-
-            return null; // Return null if there's an error or if the user is not found
-
-        } else if ("POST".equals(exchange.getRequestMethod())) {
-            if (!requestBody.getString("command").equals("delete")) {
-                return new JSONObject()
-                        .put("id", id)
-                        .put("name", productName)
-                        .put("description", description)
-                        .put("price", price_double)
-                        .put("quantity", quantity_int);
-            } else {
-                // delete command requires an empty response
-                return new JSONObject();
-            }
+            // Add a default return statement in case the request method is neither "GET" nor "POST"
+            return new JSONObject();
         }
-
-        // Add a default return statement in case the request method is neither "GET" nor "POST"
-        return new JSONObject();
-    }
 
         public static String hashPassword(String password) {
             try {
