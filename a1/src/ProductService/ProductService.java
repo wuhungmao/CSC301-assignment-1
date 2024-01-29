@@ -34,7 +34,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class ProductService {
     static String jdbcUrl = "jdbc:sqlite:db/ProductDatabase.db";
-    
+    private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
         String configFile = args[0];
@@ -50,31 +50,6 @@ public class ProductService {
             String ipAddress = productServiceConfig.getString("ip");
             int port = productServiceConfig.getInt("port");
 
-            // Register the SQLite JDBC driver
-            // Class.forName("org.sqlite.JDBC");
-            // Open a connection
-            // Class.forName("org.sqlite.JDBC");
-            Connection connection = DriverManager.getConnection(jdbcUrl);
-
-            //Before starting server, create User database
-            String createTableQuery = "CREATE TABLE IF NOT EXISTS Product ("
-                        + "productId INTEGER PRIMARY KEY,"
-                        + "productName TEXT NOT NULL,"
-                        + "description TEXT NOT NULL,"
-                        + "price INTEGER NOT NULL,"
-                        + "quantity INTEGER NOT NULL)";
-            try (Statement statement = connection.createStatement()) {
-                // Execute the query to create the User table
-                statement.executeUpdate(createTableQuery);
-                System.out.println("Product table created successfully.");
-            } catch (SQLException sqle) {
-                System.out.println("You screw up at the beginning");
-                // sqle.printStackTrace();
-            }
-            
-            // Close the connection
-            connection.close();
-            
             /*For Http request*/
             HttpServer ProductServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
             // Example: Set a custom executor with a fixed-size thread pool
@@ -95,6 +70,21 @@ public class ProductService {
     static class TestHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            requestCount++;
+            // Check if this is the first request
+            if (requestCount == 1) {
+                if("POST".equals(exchange.getRequestMethod())) {
+                    JSONObject requestbody = getRequestBody(exchange);
+                    String command = requestbody.getString("command");
+                    if (!command.equals("restart")) {
+                        System.out.println("Creating new database");
+                        createNewDatabase();
+                    }
+                } else {
+                    System.out.println("Creating new database");
+                    createNewDatabase();
+                }
+            }
             if ("POST".equals(exchange.getRequestMethod())) {
                 JSONObject requestbody = getRequestBody(exchange);
                 String command = requestbody.getString("command");
@@ -288,20 +278,27 @@ public class ProductService {
                         int statusCode = 400;
                         sendResponse(exchange, statusCode, "");
                     }
+                } else if (command.equals("shutdown")) {
+                    //Additional requirements
+                    JSONObject responseBody = new JSONObject();
+                    responseBody.put("command", command);
+                    sendResponse(exchange, 200, responseBody);
+
+                    System.out.println("Product Server has been shut down gracefully.");
+                    System.exit(0); // Exit the application
+                } else if (command.equals("restart")) {
+                    JSONObject responseBody = new JSONObject();
+                    responseBody.put("command", command);
+                    sendResponse(exchange, 200, responseBody);
+                    System.out.println("Product Server has been restarted.");
                 }
             }
             // Handle Get request 
             else if("GET".equals(exchange.getRequestMethod())){
-                // System.out.println("In get method");
                 try{
-                    // System.out.println("error 1");
-                    // Extract product ID from the request URI
-                    // System.out.println("error 1");
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
-                    // System.out.println("error 2");
 
                     int id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
-                    // System.out.println("error 3");
         
                     // Get product information
                     JSONObject responseBody = createResponse(exchange, "", id_int);
@@ -332,7 +329,6 @@ public class ProductService {
         }
 
         private static JSONObject createResponse(HttpExchange exchange, String command, Integer id_int) {
-
             if ("GET".equals(exchange.getRequestMethod())) {
                 try (Connection connection = DriverManager.getConnection(jdbcUrl)) {    
                     String selectQuery = "SELECT * FROM Product WHERE productId = ?";
@@ -450,6 +446,42 @@ public class ProductService {
                 throw new RuntimeException("Error hashing password: " + e.getMessage());
             }
         }
+        
+        private static void createNewDatabase() {
+            File databaseFile = new File("db/ProductDatabase.db");
+        
+            // Check if the database file exists
+            if (databaseFile.exists()) {
+                // Delete the existing database file
+                if (databaseFile.delete()) {
+                    System.out.println("Existing database deleted successfully.");
+                } else {
+                    System.out.println("Failed to delete the existing database.");
+                }
+            }
+            try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                // Create the Product table in the new database
+                String createTableQuery = "CREATE TABLE IF NOT EXISTS Product ("
+                        + "productId INTEGER PRIMARY KEY,"
+                        + "productName TEXT NOT NULL,"
+                        + "description TEXT NOT NULL,"
+                        + "price INTEGER NOT NULL,"
+                        + "quantity INTEGER NOT NULL)";
+                try (Statement statement = connection.createStatement()) {
+                    // Execute the query to create the Product table
+                    statement.executeUpdate(createTableQuery);
+                    System.out.println("Product table created successfully in a new database.");
+                } catch (SQLException sqle) {
+                    System.out.println("Error creating Product table: " + sqle.getMessage());
+                }
+        
+                // Close the connection
+                connection.close();
+            } catch (SQLException e) {
+                System.out.println("Error creating new database: " + e.getMessage());
+            }
+        }
+        
     }
 
     private static void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
@@ -458,4 +490,5 @@ public class ProductService {
         os.write(response.getBytes(StandardCharsets.UTF_8));
         os.close();
     }
+
 }
