@@ -71,25 +71,15 @@ public class ProductService {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             requestCount++;
-            // Check if this is the first request
-            if (requestCount == 1) {
-                if("POST".equals(exchange.getRequestMethod())) {
-                    JSONObject requestbody = getRequestBody(exchange);
-                    String command = requestbody.getString("command");
-                    if (!command.equals("restart")) {
-                        System.out.println("Creating new database");
-                        createNewDatabase();
-                    }
-                } else {
-                    System.out.println("Creating new database");
-                    createNewDatabase();
-                }
-            }
             if ("POST".equals(exchange.getRequestMethod())) {
                 JSONObject requestbody = getRequestBody(exchange);
                 String command = requestbody.getString("command");
+                if (requestCount == 1 && !command.equals("restart")) {
+                    System.out.println("Creating new database");
+                    createNewDatabase();
+                }
                 if (command.equals("create")) {
-                    /* create new product */
+                    // Check if this is the first request
                     try  (Connection connection = DriverManager.getConnection(jdbcUrl)){
                         // Get body parameters
                         int id_int = requestbody.getInt("id");
@@ -221,6 +211,7 @@ public class ProductService {
                         // e.printStackTrace();
                     }
                 } else if (command.equals("delete")) {
+
                     try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
                         int id_int = requestbody.getInt("id");
                         String productName = requestbody.getString("name");
@@ -282,19 +273,23 @@ public class ProductService {
                     //Additional requirements
                     JSONObject responseBody = new JSONObject();
                     responseBody.put("command", command);
-                    sendResponse(exchange, 200, responseBody);
+                    sendResponse(exchange, 200, responseBody.toString());
 
                     System.out.println("Product Server has been shut down gracefully.");
                     System.exit(0); // Exit the application
                 } else if (command.equals("restart")) {
                     JSONObject responseBody = new JSONObject();
                     responseBody.put("command", command);
-                    sendResponse(exchange, 200, responseBody);
+                    sendResponse(exchange, 200, responseBody.toString());
                     System.out.println("Product Server has been restarted.");
                 }
             }
             // Handle Get request 
             else if("GET".equals(exchange.getRequestMethod())){
+                if (requestCount == 1) {
+                    System.out.println("Creating new database");
+                    createNewDatabase();
+                }
                 try{
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
 
@@ -374,7 +369,6 @@ public class ProductService {
             } else if ("POST".equals(exchange.getRequestMethod())) {
                 if (!command.equals("delete")) {
                     try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
-                        System.out.println("Inside create response");
                         String selectQuery = "SELECT * FROM Product WHERE productId = ?";
                         PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                         preparedStatement.setInt(1, id_int);
@@ -475,8 +469,6 @@ public class ProductService {
                     System.out.println("Error creating Product table: " + sqle.getMessage());
                 }
         
-                // Close the connection
-                connection.close();
             } catch (SQLException e) {
                 System.out.println("Error creating new database: " + e.getMessage());
             }
