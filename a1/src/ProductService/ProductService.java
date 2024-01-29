@@ -33,7 +33,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class ProductService {
-    static String jdbcUrl = "jdbc:sqlite:/student/wuhungma/Desktop/a1/db/ProductDatabase.db";
+    static String jdbcUrl = "jdbc:sqlite:../../db/ProductDatabase.db";
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
         String configFile = args[0];
