@@ -42,12 +42,12 @@
 case "$1" in
   -c)
     # Compile code
-    javac -classpath "./compiled/*" -d ./compiled src/UserService/UserService.java
-    javac -classpath "./compiled/*" -d ./compiled src/ProductService/ProductService.java
+    javac -classpath "./compiled/*:/virtual/tranvi19/sqlite-jdbc-3.45.0.jar" -d ./compiled src/UserService/UserService.java
+    javac -classpath "./compiled/*:/virtual/tranvi19/sqlite-jdbc-3.45.0.jar" -d ./compiled src/ProductService/ProductService.java
 
     # Compile OrderService.java (Adjust the path accordingly)
     #javac -cp "$classpath" src/OrderService.java
-    javac -classpath "./compiled/*" -d ./compiled src/OrderService/OrderService.java
+    javac -classpath "./compiled/*:/virtual/tranvi19/sqlite-jdbc-3.45.0.jar" -d ./compiled src/OrderService/OrderService.java
     ;;
   -u)
     # Start User service
