@@ -31,12 +31,12 @@ def process_line(line, order_service_url):
 
     if serviceType == "USER":
         print("inside USER")
-        command = parts[1]
+        command = parts[1] if len(parts) > 1 else None
         if command == "create": 
-            id = parts[2]
-            username = parts[3]
-            email = parts[4]
-            password = parts[5]
+            id = parts[2] if len(parts) > 2 else None
+            username = parts[3] if len(parts) > 3 else None
+            email = parts[4] if len(parts) > 4 else None
+            password = parts[5] if len(parts) > 5 else None
             # Construct user-related HTTP request
             url = f"{order_service_url}/user"
             headers = {"Content-Type": "application/json"}
@@ -53,22 +53,18 @@ def process_line(line, order_service_url):
             #still need to handle response
 
         elif command == "get":
-            id = parts[2]
-            url = f"{order_service_url}/user"
+            id = parts[2] if len(parts) > 2 else None
+            url = f"{order_service_url}/user/{id}"
             headers = {"Content-Type": "application/json"}
 
-            data = {
-                "id": id,
-            }
-
-            response = requests.post(url, headers=headers, data=json.dumps(data))
+            response = requests.get(url, headers=headers)
             #still need to handle response
 
         elif command == "update":
-            id = parts[2]
-            username = parts[3]
-            email = parts[4]
-            password = parts[5]
+            id = parts[2] if len(parts) > 2 else None
+            username = parts[3] if len(parts) > 3 else None
+            email = parts[4] if len(parts) > 4 else None
+            password = parts[5] if len(parts) > 5 else None
             url = f"{order_service_url}/user"
             headers = {"Content-Type": "application/json"}
 
@@ -84,10 +80,10 @@ def process_line(line, order_service_url):
             #still need to handle response
 
         elif command == "delete":
-            id = parts[2]
-            username = parts[3]
-            email = parts[4]
-            password = parts[5]
+            id = parts[2] if len(parts) > 2 else None
+            username = parts[3] if len(parts) > 3 else None
+            email = parts[4] if len(parts) > 4 else None
+            password = parts[5] if len(parts) > 5 else None
             url = f"{order_service_url}/user"
             headers = {"Content-Type": "application/json"}
 
@@ -107,13 +103,13 @@ def process_line(line, order_service_url):
     elif serviceType == "PRODUCT":
         print("inside PRODUCT")
         
-        command = parts[1]
+        command = parts[1] if len(parts) > 1 else None
         if command == "create":
-            id = parts[2]
-            name = parts[3]
-            description = parts[4]
-            price = parts[5]
-            quantity = parts[6]
+            id = parts[2] if len(parts) > 2 else None
+            name = parts[3] if len(parts) > 3 else None
+            description = parts[4] if len(parts) > 4 else None
+            price = parts[5] if len(parts) > 5 else None
+            quantity = parts[6] if len(parts) > 6 else None
             
             url = f"{order_service_url}/product"
             headers = {"Content-Type": "application/json"}
@@ -131,25 +127,21 @@ def process_line(line, order_service_url):
             #still need to handle response
 
         elif command == "info":
-            id = parts[2]
-            url = f"{order_service_url}/product"
+            id = parts[2] if len(parts) > 2 else None
+            url = f"{order_service_url}/product/{id}"
             headers = {"Content-Type": "application/json"}
 
-            data = {
-                "id": id,
-            }
-
-            response = requests.post(url, headers=headers, data=json.dumps(data))
+            response = requests.get(url, headers=headers)
             #still need to handle response
 
             
         elif command == "update":
-            id = parts[2]
-            name = parts[3]
-            description = parts[4]
-            price = parts[5]
-            quantity = parts[6]
-                        
+            id = parts[2] if len(parts) > 2 else None
+            name = parts[3] if len(parts) > 3 else None
+            description = parts[4] if len(parts) > 4 else None
+            price = parts[5] if len(parts) > 5 else None
+            quantity = parts[6] if len(parts) > 6 else None
+    
             url = f"{order_service_url}/product"
             headers = {"Content-Type": "application/json"}
 
@@ -167,10 +159,10 @@ def process_line(line, order_service_url):
 
             
         elif command == "delete":
-            id = parts[2]
-            name = parts[3]
-            price = parts[5]
-            quantity = parts[6]
+            id = parts[2] if len(parts) > 2 else None
+            name = parts[3] if len(parts) > 3 else None
+            price = parts[4] if len(parts) > 4 else None
+            quantity = parts[5] if len(parts) > 5 else None
                          
             url = f"{order_service_url}/product"
             headers = {"Content-Type": "application/json"}
@@ -189,10 +181,10 @@ def process_line(line, order_service_url):
         else:
             print("Unknown PRODUCT command type")
     elif serviceType == "ORDER":
-        command = parts[1]
-        product_id = parts[2]
-        user_id = parts[3]
-        quantity = parts[4]
+        command = parts[1] if len(parts) > 1 else None
+        product_id = parts[2] if len(parts) > 2 else None
+        user_id = parts[3] if len(parts) > 3 else None
+        quantity = parts[4] if len(parts) > 4 else None
                         
         url = f"{order_service_url}/order"
         headers = {"Content-Type": "application/json"}
