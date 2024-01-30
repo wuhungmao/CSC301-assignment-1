@@ -92,11 +92,11 @@ public class OrderService {
             
             JSONObject productServiceConfig = config.getJSONObject("ProductService");
             String productServiceIP = productServiceConfig.getString("ip"); 
-            String productPort = productServiceConfig.getString("port"); 
+            String productPort = productServiceConfig.getInt("port"); 
 
             JSONObject userServiceConfig = config.getJSONObject("UserService");
             String userServiceIP = userServiceConfig.getString("ip"); 
-            String userPort = userServiceConfig.getString("port"); 
+            String userPort = userServiceConfig.getInt("port"); 
 
             productURL = "http://" + productServiceIP + ":" + productPort;
             userURL = "http://" + userServiceIP + ":" + userPort;
@@ -106,12 +106,12 @@ public class OrderService {
             int port = orderServiceConfig.getInt("port");
 
             /*For Http request*/
-            HttpServer userServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+            HttpServer server = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
 
             
             OrderHandler newHandler = new OrderHandler();
             //HttpServer server = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
-            server.setExecutor(Executors.newFixedThreadPool(20));
+            server.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
             
             server.createContext("/order", newHandler);
             server.start();
@@ -177,7 +177,6 @@ public class OrderService {
                     int quantity = requestBody.getInt("quantity");
 
                     //Make sure the JSON is of correct format with user id product id and qunatity
-
                     Connection connection = DriverManager.getConnection("jdbc:sqlite:ProductDatabase.db");
                     String selectQuery = "SELECT * FROM Product WHERE productId = ?";
                     PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
