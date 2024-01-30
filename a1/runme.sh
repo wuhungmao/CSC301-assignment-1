@@ -42,20 +42,19 @@
 case "$1" in
   -c)
     # Compile code
-    javac -classpath "./compiled/*:/virtual/tranvi19/sqlite-jdbc-3.45.0.jar" -d ./compiled src/UserService/UserService.java
-    javac -classpath "./compiled/*:/virtual/tranvi19/sqlite-jdbc-3.45.0.jar" -d ./compiled src/ProductService/ProductService.java
-
+    javac -classpath "./compiled/*" -d ./compiled src/UserService/UserService.java
+    javac -classpath "./compiled/*" -d ./compiled src/ProductService/ProductService.java
     # Compile OrderService.java (Adjust the path accordingly)
     #javac -cp "$classpath" src/OrderService.java
-    javac -classpath "./compiled/*:/virtual/tranvi19/sqlite-jdbc-3.45.0.jar" -d ./compiled src/OrderService/OrderService.java
+    javac -classpath "./compiled/*" -d ./compiled src/OrderService/OrderService.java
     ;;
   -u)
     # Start User service
-    java -classpath "compiled:json-java.jar:sqlite-jdbc-3.45.0.jar"  UserService.UserService.java config.json 
+    java -classpath "./compiled/*" src/UserService/UserService.java config.json 
     ;;
   -p)
     # Start Product service
-    java -classpath "compiled:json-java.jar:sqlite-jdbc-3.45.0.jar"  ProductService.ProductService config.json
+    java -classpath "./compiled/*" src/ProductService/ProductService.java config.json
     ;;
   -i)
     # Start ISCS
@@ -63,12 +62,12 @@ case "$1" in
     ;;
   -o)
     # Start Order service
-    java -classpath "compiled:json-java.jar:sqlite-jdbc-3.45.0.jar" OrderService.OrderService config.json
+    java -classpath "./compiled/*" src/OrderService/OrderService.java config.json
     ;;
   -w)
     # Start Workload parser with specified workload file
     # Assuming workload file is provided as the second argument
-    python3.7 ./compiled/workload_parser.py $2 config.json
+    python ./compiled/workload_parser.py $2
     ;;
   *)
     echo "Invalid option. Usage: $0 -c|-u|-p|-i|-o|-w workloadfile"
