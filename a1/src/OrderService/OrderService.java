@@ -139,14 +139,18 @@ public class OrderService {
                     processOrder(exchange);
                 }else if("create".equals(command) || "update".equals(command) || "delete".equals(command)){
                     try {
-                                JSONObject forwardRequest = getRequestBody(exchange);
-                                forwardRequest(userURL, forwardRequest);
+                        JSONObject forwardRequest = getRequestBody(exchange);
+                        forwardRequest(userURL, forwardRequest);
                     }catch(IOException | InterruptedException | URISyntaxException e) {
                         e.printStackTrace();
                     }
                 }
             } else {
-                forwardGetRequest(userURL);
+                try {
+                    forwardGetRequest(userURL);
+                }catch(IOException | InterruptedException | URISyntaxException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
