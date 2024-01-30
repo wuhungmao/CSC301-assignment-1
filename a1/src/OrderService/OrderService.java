@@ -171,6 +171,7 @@ public class OrderService {
             if ("place".equals(command) == true) {
                 if(requestBody.has("user_id") && requestBody.has("product_id") && requestBody.has("quantity")) {
                     // Check if productId exists
+                    int productId = requestBody.getInt("product_id");
                     if (!doesProductIdExist(productId)) {
                         responseToClient.put("status", "Product ID not found");
                         sendResponse(exchange, 400, responseToClient.toString());
@@ -178,13 +179,12 @@ public class OrderService {
                     }
 
                     // Check if userId exists
+                    int userId = requestBody.getInt("user_id");
                     if (!doesUserIdExist(userId)) {
                         responseToClient.put("status", "User ID not found");
                         sendResponse(exchange, 400, responseToClient.toString());
                         return;
                     }
-                    int userId = requestBody.getInt("user_id");
-                    int productId = requestBody.getInt("product_id");
                     int quantity = requestBody.getInt("quantity");
 
                     //Make sure the JSON is of correct format with user id product id and qunatity
