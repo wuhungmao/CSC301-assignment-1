@@ -25,10 +25,12 @@ def process_line(line, order_service_url):
     
     # Example:
     # Assuming each line is space-separated and the first word is the command
+    print("inside process_line")
     parts = line.split()
     serviceType = parts[0]
 
     if serviceType == "USER":
+        print("inside USER")
         command = parts[1]
         if command == "create": 
             id = parts[2]
@@ -103,6 +105,8 @@ def process_line(line, order_service_url):
         else:
             print("Unknown User command type")
     elif serviceType == "PRODUCT":
+        print("inside PRODUCT")
+        
         command = parts[1]
         if command == "create":
             id = parts[2]
@@ -206,7 +210,7 @@ def process_line(line, order_service_url):
     else:
         print("Invalid service:", serviceType)
 
-if len(sys.argv) != 1:
+if len(sys.argv) != 2:
     print("Usage: python workload_parser.py <workload_file_name>")
     sys.exit(1)
 
