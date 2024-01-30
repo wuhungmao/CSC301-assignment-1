@@ -5,9 +5,21 @@ import socket
 
 def get_order_service_port():
     try:
-        with open("../config.json", 'r') as config_file:
+        with open("./config.json", 'r') as config_file:
             config_data = json.load(config_file)
             return config_data["OrderService"]["port"]
+    except FileNotFoundError:
+        print("Error: Config file 'config.json' not found.")
+        sys.exit(1)
+    except json.JSONDecodeError:
+        print("Error: Unable to parse 'config.json'. Check its format.")
+        sys.exit(1)
+
+def get_order_service_ip():
+    try:
+        with open("./config.json", 'r') as config_file:
+            config_data = json.load(config_file)
+            return config_data["OrderService"]["ip"]
     except FileNotFoundError:
         print("Error: Config file 'config.json' not found.")
         sys.exit(1)
@@ -122,7 +134,7 @@ def process_line(line, order_service_url):
                 "price": price,
                 "quantity": quantity
             }
-
+            print("final url is " + url)
             response = requests.post(url, headers=headers, data=json.dumps(data))
             #still need to handle response
 
@@ -202,19 +214,16 @@ def process_line(line, order_service_url):
     else:
         print("Invalid service:", serviceType)
 
-if len(sys.argv) != 2:
-    print("Usage: python workload_parser.py <workload_file_name>")
-    sys.exit(1)
-
-port_number = get_order_service_port()
+print("inside workload_parser")
 workload_file = sys.argv[1]
 
 # Get the IP address of the current machine
-ip_address = socket.gethostbyname(socket.gethostname())
+port_number = get_order_service_port()
+ip_address = get_order_service_ip()
 
 order_service_url = f"http://{ip_address}:{port_number}"
 
-print(order_service_url)
+print("order service url is " + order_service_url)
 
 try:
     with open(workload_file, 'r') as file:
