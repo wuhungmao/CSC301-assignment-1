@@ -138,8 +138,12 @@ public class OrderService {
                 if("place".equals(command) == true){
                     processOrder(exchange);
                 }else if("create".equals(command) || "update".equals(command) || "delete".equals(command)){
-                    JSONObject forwardRequest = getRequestBody(exchange);
-                    forwardRequest(userURL, forwardRequest);
+                    try {
+                                JSONObject forwardRequest = getRequestBody(exchange);
+                                forwardRequest(userURL, forwardRequest);
+                    }catch(IOException | InterruptedException | URISyntaxException e) {
+                        e.printStackTrace();
+                    }
                 }
             } else {
                 forwardGetRequest(userURL);
