@@ -141,14 +141,14 @@ public class OrderService {
                     try {
                         JSONObject forwardRequest = getRequestBody(exchange);
                         forwardRequest(userURL, forwardRequest);
-                    }catch(IOException | InterruptedException | URISyntaxException e) {
+                    }catch(IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
             } else {
                 try {
                     forwardGetRequest(userURL);
-                }catch(IOException | InterruptedException | URISyntaxException e) {
+                }catch(IOException | InterruptedException e) {
                     e.printStackTrace();
                 }
             }
