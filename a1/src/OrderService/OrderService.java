@@ -141,6 +141,13 @@ public class OrderService {
         }
     }
 
+    private static void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
+        exchange.sendResponseHeaders(statusCode, response.length());
+        OutputStream os = exchange.getResponseBody();
+        os.write(response.getBytes(StandardCharsets.UTF_8));
+        os.close();
+    }
+
     //If order is place go inside of this body. 
     public static void processOrder(HttpExchange exchange) throws IOException {
         JSONObject responseToClient = new JSONObject();
@@ -204,6 +211,7 @@ public class OrderService {
                 }else{
                     responseToClient
                             .put("status", "Invalid Request");
+
                     sendResponse(exchange, 400, responseToClient.toString());
                 }
             }
