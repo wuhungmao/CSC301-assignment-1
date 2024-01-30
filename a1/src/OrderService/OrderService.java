@@ -235,73 +235,6 @@ public class OrderService {
         return workRunning > 0;
     }
 
-    private void processProduct(JSONObject requestBody, HttpExchange exchange) throws IOException {
-        HttpURLConnection connection = null;
-        /* 
-        try {
-            URL url = new URL(targetURL);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json; utf-8");
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setDoOutput(true);
-
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
-
-            // Read the response from the server
-            try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                StringBuilder response = new StringBuilder();
-                String responseLine;
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
-                }
-                System.out.println("Response from User Service: " + response);
-            }
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-        */
-    }
-
-    public static void processUser(String targetURL, String jsonInputString) throws IOException {
-        HttpURLConnection connection = null;
-
-        try {
-            URL url = new URL(targetURL);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json; utf-8");
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setDoOutput(true);
-
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
-
-            // Read the response from the server
-            try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                StringBuilder response = new StringBuilder();
-                String responseLine;
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
-                }
-                System.out.println("Response from User Service: " + response);
-            }
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-    }
-
     //Get the json from request
     private static JSONObject getRequestBody(HttpExchange exchange) throws IOException {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {
@@ -364,52 +297,32 @@ public class OrderService {
 
         System.out.println("Server shut down.");
     }
-    public static String forwardRequest(String targetURL, JSONObject jsonData) throws IOException {
-        //Send Response forward
-        URL url = new URL(targetURL);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json; utf-8");
-        connection.setRequestProperty("Accept", "application/json");
-        connection.setDoOutput(true);
-
-        try (OutputStream os = connection.getOutputStream()) {
-            byte[] input = jsonData.toString().getBytes(StandardCharsets.UTF_8);
-            os.write(input, 0, input.length);
-        }
-
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-            StringBuilder response = new StringBuilder();
-            String responseLine;
-            while ((responseLine = br.readLine()) != null) {
-                response.append(responseLine.trim());
-            }
-            return response.toString();
-        } finally {
-            connection.disconnect();
-        }
+    
+    public static String forwardRequest(String targetURL, JSONObject jsonData) throws IOException, InterruptedException {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(targetURL))
+            .POST(HttpRequest.BodyPublishers.ofString(jsonData.toString(), StandardCharsets.UTF_8))
+            .header("Content-Type", "application/json; utf-8")
+            .header("Accept", "application/json")
+            .build();
+    
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    
+        return response.body();
     }
 
-    public static String forwardGetRequest(String targetURL) throws IOException {
-        URL url = new URL(targetURL);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    public static String forwardGetRequest(String targetURL) throws IOException, InterruptedException {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(targetURL))
+            .GET()
+            .header("Accept", "application/json")
+            .build();
     
-        connection.setRequestMethod("GET");
-        connection.setRequestProperty("Accept", "application/json");
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
     
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-            StringBuilder response = new StringBuilder();
-            String responseLine;
-            while ((responseLine = br.readLine()) != null) {
-                response.append(responseLine.trim());
-            }
-            return response.toString();
-        } finally {
-            connection.disconnect();
-        }
+        return response.body();
     }
 
 }
