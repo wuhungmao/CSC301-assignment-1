@@ -92,11 +92,11 @@ public class OrderService {
             
             JSONObject productServiceConfig = config.getJSONObject("ProductService");
             String productServiceIP = productServiceConfig.getString("ip"); 
-            String productPort = productServiceConfig.getInt("port"); 
+            Integer productPort = productServiceConfig.getInt("port"); 
 
             JSONObject userServiceConfig = config.getJSONObject("UserService");
             String userServiceIP = userServiceConfig.getString("ip"); 
-            String userPort = userServiceConfig.getInt("port"); 
+            Integer userPort = userServiceConfig.getInt("port"); 
 
             productURL = "http://" + productServiceIP + ":" + productPort;
             userURL = "http://" + userServiceIP + ":" + userPort;
@@ -108,10 +108,8 @@ public class OrderService {
             /*For Http request*/
             HttpServer server = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
 
-            
             OrderHandler newHandler = new OrderHandler();
-            //HttpServer server = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
-            server.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
+            server.setExecutor(Executors.newFixedThreadPool(10)); 
             
             server.createContext("/order", newHandler);
             server.start();
@@ -172,6 +170,19 @@ public class OrderService {
             workRunning++;
             if ("place".equals(command) == true) {
                 if(requestBody.has("user_id") && requestBody.has("product_id") && requestBody.has("quantity")) {
+                    // Check if productId exists
+                    if (!doesProductIdExist(productId)) {
+                        responseToClient.put("status", "Product ID not found");
+                        sendResponse(exchange, 400, responseToClient.toString());
+                        return;
+                    }
+
+                    // Check if userId exists
+                    if (!doesUserIdExist(userId)) {
+                        responseToClient.put("status", "User ID not found");
+                        sendResponse(exchange, 400, responseToClient.toString());
+                        return;
+                    }
                     int userId = requestBody.getInt("user_id");
                     int productId = requestBody.getInt("product_id");
                     int quantity = requestBody.getInt("quantity");
@@ -185,7 +196,6 @@ public class OrderService {
                     ResultSet resultSet = preparedStatement.executeQuery();
 
                     if (resultSet.next()) {
-                        System.out.println("flag1");
                         String product_id = resultSet.getString("product_id");
                         String user_id = resultSet.getString("user_id");
                         Integer id = resultSet.getInt("id");
@@ -310,7 +320,7 @@ public class OrderService {
 
         System.out.println("Server shut down.");
     }
-
+    //POST forward
     public static String forwardRequest(String targetURL, JSONObject jsonData) throws IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -324,7 +334,7 @@ public class OrderService {
     
         return response.body();
     }
-
+    //GET forward
     public static String forwardGetRequest(String targetURL) throws IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -336,6 +346,42 @@ public class OrderService {
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
     
         return response.body();
+    }
+
+    private static boolean doesProductIdExist(int productId) throws SQLException {
+        String jdbcUrl = "jdbc:sqlite:src/ProductService/ProductDatabase.db";
+        boolean exists = false;
+    
+        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                 "SELECT COUNT(*) FROM Product WHERE productId = ?")) {
+            
+            preparedStatement.setInt(1, productId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    exists = resultSet.getInt(1) > 0;
+                }
+            }
+        }
+        return exists;
+    }
+
+    private static boolean doesUserIdExist(int userId) throws SQLException {
+        String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
+        boolean exists = false;
+    
+        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                 "SELECT COUNT(*) FROM User WHERE userId = ?")) {
+            
+            preparedStatement.setInt(1, userId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    exists = resultSet.getInt(1) > 0;
+                }
+            }
+        }
+        return exists;
     }
 
 }
