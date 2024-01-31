@@ -371,19 +371,6 @@ public class OrderService {
         try(DataOutputStream dos = new DataOutputStream(connection.getOutputStream())){
             dos.writeBytes(body);
         }
-
-        System.err.println("hello40");
-        String line;
-        StringBuilder response = new StringBuilder();
-        System.err.println("hello50");
-        // Read the response from the server
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-            System.out.println(response);
-        }
-        System.err.println("hello30");
         connection.disconnect();
         return "response";
 
@@ -400,17 +387,6 @@ public class OrderService {
         int responseCode = connection.getResponseCode();
         System.out.println("Response Code: " + responseCode);
 
-        String line;
-        StringBuilder response = new StringBuilder();
-        // Read the response from the server
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-            System.out.println("Response from server: " + response.toString());
-        }
-
-        // Close the connection
         connection.disconnect();
         return "response";
     }
