@@ -372,10 +372,7 @@ public class OrderService {
         try(DataOutputStream dos = new DataOutputStream(connection.getOutputStream())){
             dos.writeBytes(body);
         }
-        System.err.println("hello30");
 
-        int responseCode = connection.getResponseCode();
-        System.out.println("Response Code: " + responseCode);
         String line;
         StringBuilder response = new StringBuilder();
         // Read the response from the server
