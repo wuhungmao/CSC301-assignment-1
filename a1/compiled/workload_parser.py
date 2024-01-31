@@ -73,7 +73,8 @@ def process_line(line, order_service_url):
             #still need to handle response
 
         elif command == "update":
-
+            
+            id = parts[2] if len(parts) > 2 else None
             # Extract values without prefixes using split
             username_part = parts[3].split(":") if len(parts) > 3 else None
             email_part = parts[4].split(":") if len(parts) > 4 else None
