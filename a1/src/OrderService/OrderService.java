@@ -257,6 +257,8 @@ public class OrderService {
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
                     Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
                     forwardGetRequest(userURL + "/" + id_int.toString());
+                    OutputStream os = exchange.getResponseBody();
+                    os.close();
                 } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -272,7 +274,6 @@ public class OrderService {
                     String command = requestBody.getString("command");
                     if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                         try {
-                            System.out.println("flag1");
                             forwardRequest(productURL, requestBody);
                             sendResponse(exchange, 200, "forward");
                         } catch (IOException | InterruptedException e) {
@@ -286,6 +287,8 @@ public class OrderService {
                 } else {
                     try {
                         forwardGetRequest(productURL);
+                        OutputStream os = exchange.getResponseBody();
+                        os.close();
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
