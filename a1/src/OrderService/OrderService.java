@@ -242,8 +242,9 @@ public class OrderService {
                 String command = requestBody.getString("command");
                 if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                     try {
+                        System.err.println("hello1");
                         forwardRequest(userURL, requestBody);
-                        System.err.println("hello");
+                        System.err.println("hello2");
                         sendResponse(exchange, 200, "forward");
                         System.err.println("hello");
                     } catch (IOException | InterruptedException e) {
@@ -358,16 +359,19 @@ public class OrderService {
         URL url = URI.create(targetURL).toURL();
         String body = jsonData.toString();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        System.err.println("hello10");
 
         // Set the request method to GET
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
         connection.setRequestProperty("Content-Type", "application/json");
+        System.err.println("hello20");
 
         // Get the response code
         try(DataOutputStream dos = new DataOutputStream(connection.getOutputStream())){
             dos.writeBytes(body);
         }
+        System.err.println("hello30");
 
         int responseCode = connection.getResponseCode();
         System.out.println("Response Code: " + responseCode);
