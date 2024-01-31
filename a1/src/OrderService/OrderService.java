@@ -372,8 +372,10 @@ public class OrderService {
             dos.writeBytes(body);
         }
 
+        System.err.println("hello40");
         String line;
         StringBuilder response = new StringBuilder();
+        System.err.println("hello50");
         // Read the response from the server
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
             while ((line = reader.readLine()) != null) {
