@@ -245,6 +245,7 @@ public class OrderService {
                         forwardRequest(userURL, requestBody);
                         sendResponse(exchange, 200, "forward");
                     } catch (IOException | InterruptedException e) {
+                        JSONObject responseToClient = new JSONObject();
                         responseToClient.put("status", "Invalid Request");
                         sendResponse(exchange, 400, responseToClient.toString());
                     }
@@ -261,6 +262,7 @@ public class OrderService {
                     OutputStream os = exchange.getResponseBody();
                     os.close();
                 } catch (IOException | InterruptedException e) {
+                    JSONObject responseToClient = new JSONObject();
                     responseToClient.put("status", "Invalid Request");
                     sendResponse(exchange, 400, responseToClient.toString());
                 }
@@ -280,6 +282,7 @@ public class OrderService {
                             sendResponse(exchange, 200, "forward");
                             System.out.println("product sent");
                         } catch (IOException | InterruptedException e) {
+                            JSONObject responseToClient = new JSONObject();
                             responseToClient.put("status", "Invalid Request");
                             sendResponse(exchange, 400, responseToClient.toString());
                         }
@@ -296,6 +299,7 @@ public class OrderService {
                         OutputStream os = exchange.getResponseBody();
                         os.close();
                     } catch (IOException | InterruptedException e) {
+                        JSONObject responseToClient = new JSONObject();
                         responseToClient.put("status", "Invalid Request");
                         sendResponse(exchange, 400, responseToClient.toString());
                     }
