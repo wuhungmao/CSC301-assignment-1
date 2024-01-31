@@ -242,13 +242,11 @@ public class OrderService {
                 String command = requestBody.getString("command");
                 if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                     try {
-                        System.err.println("hello1");
                         forwardRequest(userURL, requestBody);
-                        System.err.println("hello2");
                         sendResponse(exchange, 200, "forward");
-                        System.err.println("hello");
                     } catch (IOException | InterruptedException e) {
-                        e.printStackTrace();
+                        responseToClient.put("status", "Invalid Request");
+                        sendResponse(exchange, 400, responseToClient.toString());
                     }
                 }else{
                     JSONObject responseToClient = new JSONObject();
@@ -263,7 +261,8 @@ public class OrderService {
                     OutputStream os = exchange.getResponseBody();
                     os.close();
                 } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
+                    responseToClient.put("status", "Invalid Request");
+                    sendResponse(exchange, 400, responseToClient.toString());
                 }
             }
         }
@@ -279,8 +278,10 @@ public class OrderService {
                         try {
                             forwardRequest(productURL, requestBody);
                             sendResponse(exchange, 200, "forward");
+                            System.out.println("product sent");
                         } catch (IOException | InterruptedException e) {
-                            e.printStackTrace();
+                            responseToClient.put("status", "Invalid Request");
+                            sendResponse(exchange, 400, responseToClient.toString());
                         }
                     }else{
                         JSONObject responseToClient = new JSONObject();
@@ -289,11 +290,14 @@ public class OrderService {
                     }
                 } else {
                     try {
-                        forwardGetRequest(productURL);
+                        String[] pathSegments = exchange.getRequestURI().getPath().split("/");
+                        Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
+                        forwardGetRequest(userURL + "/" + id_int.toString());
                         OutputStream os = exchange.getResponseBody();
                         os.close();
                     } catch (IOException | InterruptedException e) {
-                        e.printStackTrace();
+                        responseToClient.put("status", "Invalid Request");
+                        sendResponse(exchange, 400, responseToClient.toString());
                     }
                 }
             }
@@ -359,13 +363,11 @@ public class OrderService {
         URL url = URI.create(targetURL).toURL();
         String body = jsonData.toString();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        System.err.println("hello10");
 
         // Set the request method to GET
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
         connection.setRequestProperty("Content-Type", "application/json");
-        System.err.println("hello20");
 
         // Get the response code
         try(DataOutputStream dos = new DataOutputStream(connection.getOutputStream())){
@@ -412,16 +414,13 @@ public class OrderService {
     private static boolean doesUserIdExist(int userId) throws SQLException {
         String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
         boolean exists = false;
-        System.out.println("27");
         try (Connection connection = DriverManager.getConnection(jdbcUrl);
              PreparedStatement preparedStatement = connection.prepareStatement(
                  "SELECT COUNT(*) FROM User WHERE user_id = ?")) {
             
             preparedStatement.setInt(1, userId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                System.out.println("29");
                 if (resultSet.next()) {
-                    System.out.println("29.5");
                     exists = resultSet.getInt(1) > 0;
                 }
             }
