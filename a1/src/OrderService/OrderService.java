@@ -239,8 +239,6 @@ public class OrderService {
         public void handle(HttpExchange exchange) throws IOException {
             if ("POST".equals((exchange.getRequestMethod()))) {
                 JSONObject requestBody = getRequestBody(exchange);
-                String[] pathSegments = exchange.getRequestURI().getPath().split("/");
-                Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
                 String command = requestBody.getString("command");
                 if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                     try {
@@ -256,6 +254,8 @@ public class OrderService {
                 }
             } else {
                 try {
+                    String[] pathSegments = exchange.getRequestURI().getPath().split("/");
+                    Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
                     forwardGetRequest(userURL + "/" + id_int.toString());
                 } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
@@ -388,7 +388,7 @@ public class OrderService {
             System.out.println(response);
         }
         connection.disconnect();
-        return response;
+        return "response";
 
     }
     //GET forward
@@ -415,7 +415,7 @@ public class OrderService {
 
         // Close the connection
         connection.disconnect();
-        return response;
+        return "response";
     }
 
     private static boolean doesProductIdExist(int productId) throws SQLException {
