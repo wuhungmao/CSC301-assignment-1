@@ -256,7 +256,7 @@ public class OrderService {
                 }
             } else {
                 try {
-                    forwardGetRequest(userURL);
+                    forwardGetRequest(userURL + "/" + id_int.toString());
                 } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -361,7 +361,7 @@ public class OrderService {
         System.exit(0); // Exit the application
     }
     //POST forward
-    public static void forwardRequest(String targetURL, JSONObject jsonData) throws IOException, InterruptedException {
+    public static String forwardRequest(String targetURL, JSONObject jsonData) throws IOException, InterruptedException {
         URL url = URI.create(targetURL).toURL();
         String body = jsonData.toString();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -378,21 +378,22 @@ public class OrderService {
 
         int responseCode = connection.getResponseCode();
         System.out.println("Response Code: " + responseCode);
+        String line;
+        StringBuilder response = new StringBuilder();
         // Read the response from the server
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            String line;
-            StringBuilder response = new StringBuilder();
             while ((line = reader.readLine()) != null) {
                 response.append(line);
             }
             System.out.println(response);
         }
         connection.disconnect();
+        return response;
 
     }
     //GET forward
-    public static void forwardGetRequest(String targetURL) throws IOException, InterruptedException {
-        URL url = URI.create(targetURL + "/" + id_int.toString()).toURL();
+    public static String forwardGetRequest(String targetURL) throws IOException, InterruptedException {
+        URL url = URI.create(targetURL).toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
         // Set the request method to GET
@@ -402,10 +403,10 @@ public class OrderService {
         int responseCode = connection.getResponseCode();
         System.out.println("Response Code: " + responseCode);
 
+        String line;
+        StringBuilder response = new StringBuilder();
         // Read the response from the server
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            String line;
-            StringBuilder response = new StringBuilder();
             while ((line = reader.readLine()) != null) {
                 response.append(line);
             }
@@ -414,6 +415,7 @@ public class OrderService {
 
         // Close the connection
         connection.disconnect();
+        return response;
     }
 
     private static boolean doesProductIdExist(int productId) throws SQLException {
