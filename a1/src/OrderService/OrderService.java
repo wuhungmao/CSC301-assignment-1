@@ -99,8 +99,8 @@ public class OrderService {
             productURL = "http://" + productServiceIP + ":" + productPort + "/product";
             userURL = "http://" + userServiceIP + ":" + userPort + "/user";
 
-            System.out.println(productURL);
-            System.out.println(userURL);
+            //System.out.println(productURL);
+            //System.out.println(userURL);
 
             // Extract IP address and port
             String ipAddress = orderServiceConfig.getString("ip");
@@ -118,8 +118,8 @@ public class OrderService {
             server.createContext("/user", newHandler2);
             server.createContext("/product", newHandler3);
             server.start();
-            System.out.println("OrderService IP Address: " + ipAddress);
-            System.out.println("OrderService Port: " + port);
+            //System.out.println("OrderService IP Address: " + ipAddress);
+            //System.out.println("OrderService Port: " + port);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -244,6 +244,7 @@ public class OrderService {
                     try {
                         forwardRequest(userURL, requestBody);
                         sendResponse(exchange, 200, "forward");
+                        System.err.println("hello");
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -323,19 +324,6 @@ public class OrderService {
         }
     }
 
-    private static JSONObject getIPAddressFromConfig(String configFilePath) throws IOException {
-        String content = new String(Files.readAllBytes(Paths.get(configFilePath)), "UTF-8");
-        JSONObject config = new JSONObject(content);
-        System.out.println(config);
-        return config;
-    }
-
-    public static List<String> parseWords(String input) {
-        //Split the wordload by space
-        String[] words = input.split(" ");
-        return Arrays.asList(words);
-    }
-
     //Shutdown 
     private static void shutdownServer() {
         // Stop accepting new requests
@@ -363,6 +351,7 @@ public class OrderService {
         System.out.println("Server shut down.");
         System.exit(0); // Exit the application
     }
+
     //POST forward
     public static String forwardRequest(String targetURL, JSONObject jsonData) throws IOException, InterruptedException {
         URL url = URI.create(targetURL).toURL();
