@@ -73,10 +73,17 @@ def process_line(line, order_service_url):
             #still need to handle response
 
         elif command == "update":
-            id = parts[2] if len(parts) > 2 else None
-            username = parts[3] if len(parts) > 3 else None
-            email = parts[4] if len(parts) > 4 else None
-            password = parts[5] if len(parts) > 5 else None
+
+            # Extract values without prefixes using split
+            username_part = parts[3].split(":") if len(parts) > 3 else None
+            email_part = parts[4].split(":") if len(parts) > 4 else None
+            password_part = parts[5].split(":") if len(parts) > 5 else None
+            
+            # Assign the values if available, or None otherwise
+            username = username_part[1] if username_part and len(username_part) > 1 else None
+            email = email_part[1] if email_part and len(email_part) > 1 else None
+            password = password_part[1] if password_part and len(password_part) > 1 else None
+            
             url = f"{order_service_url}/user"
             headers = {"Content-Type": "application/json"}
 
@@ -149,11 +156,19 @@ def process_line(line, order_service_url):
             
         elif command == "update":
             id = parts[2] if len(parts) > 2 else None
-            name = parts[3] if len(parts) > 3 else None
-            description = parts[4] if len(parts) > 4 else None
-            price = parts[5] if len(parts) > 5 else None
-            quantity = parts[6] if len(parts) > 6 else None
-    
+
+            # Extract values without prefixes using split
+            name_part = parts[3].split(":") if len(parts) > 3 else None
+            description_part = parts[4].split(":") if len(parts) > 4 else None
+            price_part = parts[5].split(":") if len(parts) > 5 else None
+            quantity_part = parts[6].split(":") if len(parts) > 6 else None
+            
+            # Assign the values if available, or None otherwise
+            name = name_part[1] if name_part and len(name_part) > 1 else None
+            description = description_part[1] if description_part and len(description_part) > 1 else None
+            price = price_part[1] if price_part and len(price_part) > 1 else None
+            quantity = quantity_part[1] if quantity_part and len(quantity_part) > 1 else None
+            
             url = f"{order_service_url}/product"
             headers = {"Content-Type": "application/json"}
 
