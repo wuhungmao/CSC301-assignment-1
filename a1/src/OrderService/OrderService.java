@@ -383,13 +383,16 @@ public class OrderService {
             while ((line = reader.readLine()) != null) {
                 response.append(line);
             }
+            System.out.println(response);
         }
         connection.disconnect();
 
     }
     //GET forward
     public static void forwardGetRequest(String targetURL) throws IOException, InterruptedException {
-        URL url = URI.create(targetURL).toURL();
+        String[] pathSegments = exchange.getRequestURI().getPath().split("/");
+        Interger id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
+        URL url = URI.create(targetURL + "/" + id_int.toString()).toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
         // Set the request method to GET
