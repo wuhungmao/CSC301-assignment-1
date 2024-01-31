@@ -213,10 +213,9 @@ public class OrderService {
 
                         }
                     } catch (SQLException e) {
-                        System.out.println("sqlite error");
-                        //Return 404, since sqlException either user_id or product_id not found
                         responseToClient
                                 .put("status", "Invalid Request");
+                                
                         sendResponse(exchange, 400, responseToClient.toString());
                     } finally {
                         workRunning--;
