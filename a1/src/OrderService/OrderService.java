@@ -118,8 +118,8 @@ public class OrderService {
             server.createContext("/user", newHandler2);
             server.createContext("/product", newHandler3);
             server.start();
-            //System.out.println("OrderService IP Address: " + ipAddress);
-            //System.out.println("OrderService Port: " + port);
+            System.out.println("OrderService IP Address: " + ipAddress);
+            System.out.println("OrderService Port: " + port);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -243,6 +243,7 @@ public class OrderService {
                 if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                     try {
                         forwardRequest(userURL, requestBody);
+                        System.err.println("hello");
                         sendResponse(exchange, 200, "forward");
                         System.err.println("hello");
                     } catch (IOException | InterruptedException e) {
