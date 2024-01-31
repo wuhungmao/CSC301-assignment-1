@@ -239,6 +239,8 @@ public class OrderService {
         public void handle(HttpExchange exchange) throws IOException {
             if ("POST".equals((exchange.getRequestMethod()))) {
                 JSONObject requestBody = getRequestBody(exchange);
+                String[] pathSegments = exchange.getRequestURI().getPath().split("/");
+                Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
                 String command = requestBody.getString("command");
                 if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                     try {
@@ -390,8 +392,6 @@ public class OrderService {
     }
     //GET forward
     public static void forwardGetRequest(String targetURL) throws IOException, InterruptedException {
-        String[] pathSegments = exchange.getRequestURI().getPath().split("/");
-        Interger id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
         URL url = URI.create(targetURL + "/" + id_int.toString()).toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
