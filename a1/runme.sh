@@ -58,7 +58,7 @@ case "$1" in
     ;;
   -i)
     # Start ISCS
-    java ISCS config.json
+    python3 ./src/ISCS/flaskISCS.py
     ;;
   -o)
     # Start Order service
