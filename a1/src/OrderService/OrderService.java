@@ -365,6 +365,7 @@ public class OrderService {
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
         connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Connection", "close");
         System.err.println("hello20");
 
         // Get the response code
