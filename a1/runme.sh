@@ -67,7 +67,7 @@ case "$1" in
   -w)
     # Start Workload parser with specified workload file
     # Assuming workload file is provided as the second argument
-    python ./compiled/workload_parser.py $2
+    python3 ./compiled/workload_parser.py $2
     ;;
   *)
     echo "Invalid option. Usage: $0 -c|-u|-p|-i|-o|-w workloadfile"

@@ -263,9 +263,12 @@ public class OrderService {
                 try {
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
                     Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
-                    forwardGetRequest(userURL + "/" + id_int.toString());
-                    OutputStream os = exchange.getResponseBody();
-                    os.close();
+                    int code = forwardGetRequest(userURL + "/" + id_int.toString());
+                    
+                    JSONObject responseToClient = new JSONObject();
+                    responseToClient.put("status", "Invalid Request");
+
+                    sendResponse(exchange, code, "Success");
                 } catch (IOException | InterruptedException e) {
                     JSONObject responseToClient = new JSONObject();
                     responseToClient.put("status", "Invalid Request");
@@ -285,7 +288,6 @@ public class OrderService {
                         try {
                             forwardRequest(productURL, requestBody);
                             sendResponse(exchange, 200, "forward");
-                            System.out.println("product sent");
                         } catch (IOException | InterruptedException e) {
                             JSONObject responseToClient = new JSONObject();
                             responseToClient.put("status", "Invalid Request");
@@ -300,9 +302,12 @@ public class OrderService {
                     try {
                         String[] pathSegments = exchange.getRequestURI().getPath().split("/");
                         Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
-                        forwardGetRequest(userURL + "/" + id_int.toString());
-                        OutputStream os = exchange.getResponseBody();
-                        os.close();
+                        int code = forwardGetRequest(userURL + "/" + id_int.toString());
+                        
+                        JSONObject responseToClient = new JSONObject();
+                        responseToClient.put("status", "Invalid Request");
+
+                        sendResponse(exchange, code, "Success");
                     } catch (IOException | InterruptedException e) {
                         JSONObject responseToClient = new JSONObject();
                         responseToClient.put("status", "Invalid Request");
@@ -387,7 +392,7 @@ public class OrderService {
 
     }
     //GET forward
-    public static String forwardGetRequest(String targetURL) throws IOException, InterruptedException {
+    public static int forwardGetRequest(String targetURL) throws IOException, InterruptedException {
         URL url = URI.create(targetURL).toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -396,10 +401,9 @@ public class OrderService {
 
         // Get the response code
         int responseCode = connection.getResponseCode();
-        System.out.println("Response Code: " + responseCode);
 
         connection.disconnect();
-        return "response";
+        return responseCode;
     }
 
     private static boolean doesProductIdExist(int productId) throws SQLException {
