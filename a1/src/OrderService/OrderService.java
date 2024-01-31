@@ -215,11 +215,17 @@ public class OrderService {
                     } catch (SQLException e) {
                         responseToClient
                                 .put("status", "Invalid Request");
-                                
+
                         sendResponse(exchange, 400, responseToClient.toString());
                     } finally {
                         workRunning--;
                     }
+                }else{
+                    JSONObject responseToClient = new JSONObject();
+                    responseToClient
+                    .put("status", "Invalid Request");
+
+                    sendResponse(exchange, 400, responseToClient.toString());
                 }
             }else if (command.equals("shutdown")) {
                 //Additional requirements
