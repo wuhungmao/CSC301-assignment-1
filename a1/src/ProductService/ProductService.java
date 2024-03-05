@@ -27,7 +27,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.sqlite.JDBC;
+import java.sql.*;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +35,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class ProductService {
-    static String jdbcUrl = "jdbc:sqlite:src/ProductService/ProductDatabase.db";
+    public static String jdbcUrl = "jdbc:postgresql://localhost:5432/product";
+    String username = "postgres"; 
+    String password = "password"; 
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
@@ -73,6 +75,8 @@ public class ProductService {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             requestCount++;
+            String username = "postgres"; 
+            String password = "password"; 
             if ("POST".equals(exchange.getRequestMethod())) {
                 JSONObject requestbody = getRequestBody(exchange);
                 String command = requestbody.getString("command");
@@ -82,7 +86,7 @@ public class ProductService {
                 }
                 if (command.equals("create")) {
                     // Check if this is the first request
-                    try  (Connection connection = DriverManager.getConnection(jdbcUrl)){
+                    try  (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)){
                         // Get body parameters
                         int id_int = requestbody.getInt("id");
                         String id = String.valueOf(id_int);
@@ -145,7 +149,7 @@ public class ProductService {
                     }
                 } else if (command.equals("update")) {
                     /* update product */
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
                         // Get body parameters
                         int id_int = requestbody.getInt("id");
 
@@ -214,7 +218,7 @@ public class ProductService {
                     }
                 } else if (command.equals("delete")) {
 
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
                         int id_int = requestbody.getInt("id");
                         String productName = requestbody.getString("name");
                         String description = requestbody.getString("description");
@@ -326,8 +330,10 @@ public class ProductService {
         }
 
         private static JSONObject createResponse(HttpExchange exchange, String command, Integer id_int) {
+            String username = "postgres"; 
+            String password = "password"; 
             if ("GET".equals(exchange.getRequestMethod())) {
-                try (Connection connection = DriverManager.getConnection(jdbcUrl)) {    
+                try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {    
                     String selectQuery = "SELECT * FROM Product WHERE productId = ?";
                     PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                     preparedStatement.setInt(1, id_int);
@@ -370,7 +376,7 @@ public class ProductService {
 
             } else if ("POST".equals(exchange.getRequestMethod())) {
                 if (!command.equals("delete")) {
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
                         String selectQuery = "SELECT * FROM Product WHERE productId = ?";
                         PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                         preparedStatement.setInt(1, id_int);
@@ -445,6 +451,8 @@ public class ProductService {
         
         private static void createNewDatabase() {
             File databaseFile = new File("db/ProductDatabase.db");
+            String username = "postgres"; 
+            String password = "password"; 
         
             // Check if the database file exists
             if (databaseFile.exists()) {
@@ -455,7 +463,7 @@ public class ProductService {
                     System.out.println("Failed to delete the existing database.");
                 }
             }
-            try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+            try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
                 // Create the Product table in the new database
                 String createTableQuery = "CREATE TABLE IF NOT EXISTS Product ("
                         + "productId INTEGER PRIMARY KEY,"

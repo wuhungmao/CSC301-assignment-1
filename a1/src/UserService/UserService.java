@@ -19,12 +19,7 @@ import java.util.concurrent.Executors;
 import org.json.JSONObject;
 import org.json.JSONException;
 //Database
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -80,8 +75,10 @@ returns the following JSON in the response body.
 */
 
 public class UserService {
-    public static String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
+    public static String jdbcUrl = "jdbc:postgresql://localhost:5432/users";
     private static int requestCount = 0;
+    public static String username = "postgres"; 
+    public static String password = "password"; 
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
         String configFile = args[0];
@@ -127,24 +124,37 @@ public class UserService {
                 }
                 if (command.equals("create")) 
                 {
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
                         /* Get values */
                         int id_int = requestbody.getInt("id");
                         String id = String.valueOf(id_int);
                         String username = requestbody.getString("username");
                         String email = requestbody.getString("email");
                         String password = requestbody.getString("password");
+                        System.out.println("flag1");
 
-                        String insertQuery = "INSERT INTO User (user_id, username, email, password) VALUES (?, ?, ?, ?)";
+                        String insertQuery = "INSERT INTO Users (user_id, username, email, password) VALUES (?, ?, ?, ?)";
                         PreparedStatement preparedStatement = connection.prepareStatement(insertQuery);
+                        System.out.println("flag2");
                         preparedStatement.setInt(1, id_int);
                         preparedStatement.setString(2, username);
                         preparedStatement.setString(3, email);
                         preparedStatement.setString(4, password);
-                        int rowsAffected = preparedStatement.executeUpdate();
+                        int rowsAffected = 0;
+                        try {
+                            // Your existing prepared statement setup
+                            System.out.println("flag3");
+                            rowsAffected = preparedStatement.executeUpdate();
+                            System.out.println("flag4");
+                        } catch (SQLException e) {
+                            System.out.println("SQLException: " + e.getMessage());
+                            System.out.println("SQLState: " + e.getSQLState());
+                            System.out.println("VendorError: " + e.getErrorCode());
+                        }
                         preparedStatement.close();
                         /* Create response JSON */
 
+                        System.out.println("flag4");
                         //Put in all information that needs to be sent to the client
                         JSONObject responseBody = createResponse(exchange, command, id_int);
                         int statusCode = 200;
@@ -172,11 +182,11 @@ public class UserService {
                 else if (command.equals("update")) 
                 {
                     /*update user */
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
                         int id_int = requestbody.getInt("id");
 
                         // Build the dynamic part of the UPDATE query based on provided attributes
-                        StringBuilder updateQueryBuilder = new StringBuilder("UPDATE User SET ");
+                        StringBuilder updateQueryBuilder = new StringBuilder("UPDATE Users SET ");
                         List<String> setClauses = new ArrayList<>();
 
                         if (requestbody.has("username")) {
@@ -221,6 +231,7 @@ public class UserService {
                         //Put in all information that needs to be sent to the client
                         JSONObject responseBody = createResponse(exchange, command, id_int);
                         int statusCode = (rowsAffected > 0) ? 200 : 404;
+
                         sendResponse(exchange, statusCode, responseBody.toString());
 
                         if (rowsAffected > 0) {
@@ -233,13 +244,13 @@ public class UserService {
                     }
                 } 
                 else if (command.equals("delete")) {
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
                         int id_int = requestbody.getInt("id");
                         String username = requestbody.getString("username");
                         String email = requestbody.getString("email");
                         String password = requestbody.getString("password");
                 
-                        String selectQuery = "SELECT * FROM User WHERE user_id = ? AND username = ? AND email = ? AND password = ?";
+                        String selectQuery = "SELECT * FROM Users WHERE user_id = ? AND username = ? AND email = ? AND password = ?";
                         PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
                         selectStatement.setInt(1, id_int);
                         selectStatement.setString(2, username);
@@ -253,7 +264,7 @@ public class UserService {
                             resultSet.close();
                             selectStatement.close();
                 
-                            String deleteQuery = "DELETE FROM User WHERE user_id = ?";
+                            String deleteQuery = "DELETE FROM Users WHERE user_id = ?";
                             PreparedStatement deleteStatement = connection.prepareStatement(deleteQuery);
                             deleteStatement.setInt(1, id_int);
                 
@@ -340,8 +351,8 @@ public class UserService {
 
         private static JSONObject createResponse(HttpExchange exchange, String command, Integer id_int) {
             if ("GET".equals(exchange.getRequestMethod())) {
-                try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
-                    String selectQuery = "SELECT * FROM User WHERE user_id = ?";
+                try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
+                    String selectQuery = "SELECT * FROM Users WHERE user_id = ?";
                     PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                     preparedStatement.setInt(1, id_int);
 
@@ -381,8 +392,8 @@ public class UserService {
 
             } else if ("POST".equals(exchange.getRequestMethod())) {
                 if (!command.equals("delete")) {
-                    try  (Connection connection = DriverManager.getConnection(jdbcUrl)){
-                        String selectQuery = "SELECT * FROM User WHERE user_id = ?";
+                    try  (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)){
+                        String selectQuery = "SELECT * FROM Users WHERE user_id = ?";
                         PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                         preparedStatement.setInt(1, id_int);
 
@@ -453,36 +464,21 @@ public class UserService {
         }
         
         private static void createNewDatabase() {
-            File databaseFile = new File("db/UserDatabase.db");
-        
-            // Check if the database file exists
-            if (databaseFile.exists()) {
-                // Delete the existing database file
-                if (databaseFile.delete()) {
-                    System.out.println("Existing database deleted successfully.");
-                } else {
-                    System.out.println("Failed to delete the existing database.");
-                }
-            }
-            try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
-                // Create the Product table in the new database
-                                    
-                //Before starting server, create User database
-                String createTableQuery = "CREATE TABLE IF NOT EXISTS User ("
-                            + "user_id INTEGER PRIMARY KEY,"
+            try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
+                String createTableQuery = "CREATE TABLE IF NOT EXISTS Users ("
+                            + "user_id SERIAL PRIMARY KEY,"
                             + "username TEXT NOT NULL,"
                             + "email TEXT NOT NULL,"
                             + "password TEXT NOT NULL)";
                 
                 try (Statement statement = connection.createStatement()) {
-                    // Execute the query to create the User table
                     statement.executeUpdate(createTableQuery);
                     System.out.println("User table created successfully.");
                 } catch (SQLException sqle) {
                     System.out.println("Error creating User table: " + sqle.getMessage());
                 }
             } catch (SQLException e) {
-                System.out.println("Error creating new database: " + e.getMessage());
+                System.out.println("Error connecting to the database: " + e.getMessage());
             }
         }
     

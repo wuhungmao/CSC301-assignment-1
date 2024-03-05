@@ -1,16 +1,13 @@
 package OrderService;
-
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
-
 import java.io.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.Arrays;
 import java.util.List;
-
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -27,16 +24,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.io.IOException;
-
-
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 //import JSONObject
 import org.json.JSONObject;
+import java.sql.*;
 
 /*
 Order Service:
@@ -69,7 +65,7 @@ Note: this means that to place an order, you may have to first make a GET reques
 public class OrderService {
     public static HttpServer server;
     public static ExecutorService httpThreadPool;
-    public static String jdbcUrl = "jdbc:sqlite:UserDatabase.db";
+    public static String jdbcUrl = "jdbc:postgresql://localhost:5432/order";
     private static final String ISCS_ENDPOINT = "http://127.0.0.0.1/forward";
 
     //Shutdown Signals
@@ -139,87 +135,83 @@ public class OrderService {
                     JSONObject responseToClient = new JSONObject();
                     try {
                         workRunning++;
-                        if (requestBody.has("user_id") && requestBody.has("product_id") && requestBody.has("quantity")) {
-                            // Check if productId exists
-                            int productId = requestBody.getInt("product_id");
-                            if (!doesProductIdExist(productId)) {
-                                responseToClient.put("status", "Product ID not found");
-                                sendResponse(exchange, 400, responseToClient.toString());
-                                return;
-                            }
-
-                            // Check if userId exists
-                            int userId = requestBody.getInt("user_id");
-                            if (!doesUserIdExist(userId)) {
-                                responseToClient.put("status", "User ID not found");
-                                sendResponse(exchange, 400, responseToClient.toString());
-                                return;
-                            }
-                            int quantity = requestBody.getInt("quantity");
-
-                            //Make sure the JSON is of correct format with user id product id and qunatity
-                            Connection connection = DriverManager.getConnection("jdbc:sqlite:src/ProductService/ProductDatabase.db");
-                            String selectQuery = "SELECT * FROM Product WHERE productId = ?";
-                            PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
-                            preparedStatement.setInt(1, productId);
-
-                            ResultSet resultSet = preparedStatement.executeQuery();
-
-                            if (resultSet.next()) {
-                                System.out.println("test1");
-                                String product_id = resultSet.getString("productId");
-                                System.out.println("test2");
-                                System.out.println("test4");
-                                Integer count = resultSet.getInt("quantity");
-                                System.out.println("test5");
-                                orderId += 1;
-
-                                // Return 409 if the amount inside database is less than quantity asked
-                                if (count < quantity) {
-                                    System.out.println("flag2");
-                                    responseToClient
-                                            .put("id", orderId)
-                                            .put("product_id", product_id)
-                                            .put("user_id", userId)
-                                            .put("quantity", count)
-                                            .put("status", "Exceeded quantity limit");
-                                    sendResponse(exchange, 400, responseToClient.toString());
-                                } else {
-                                    System.out.println("flag3");
-                                    //Else, if no sql error and count is bigger or equal, we can process the order
-                                    responseToClient
-                                            .put("id", orderId)
-                                            .put("product_id", product_id)
-                                            .put("user_id", userId)
-                                            .put("quantity", count)
-                                            .put("status", "Success");
-                                    sendResponse(exchange, 400, responseToClient.toString());
-                                }
-                            }
-                            //Close
-                            resultSet.close();
-                            preparedStatement.close();
-                            connection.close();
-
-                            System.out.println("User ID: " + userId);
-                            System.out.println("Product ID: " + productId);
-                            System.out.println("Quantity: " + quantity);
-
-                        } else {
-                            responseToClient
-                                    .put("status", "Invalid Request");
-
+                        int productId, quantity, userId;    
+                        try{
+                            productId = requestBody.getInt("product_id");
+                        }catch(Exception e){
+                            responseToClient.put("status", "Product ID not found");
                             sendResponse(exchange, 400, responseToClient.toString());
-
+                            return;
+                        }             
+                        try{
+                            userId = requestBody.getInt("user_id");
+                        }catch(Exception e){
+                            responseToClient.put("status", "User ID not found");
+                            sendResponse(exchange, 400, responseToClient.toString());
+                            return;
                         }
-                    } catch (SQLException e) {
-                        responseToClient
-                                .put("status", "Invalid Request");
+                        try{
+                            quantity = requestBody.getInt("quantity");
+                        }catch(Exception e){
+                            responseToClient.put("status", "User ID not found");
+                            sendResponse(exchange, 400, responseToClient.toString());
+                            return;
+                        }
+        
+                        String username = "postgres"; 
+                        String password = "password"; 
+                        //Make sure the JSON is of correct format with user id product id and qunatity
+                        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/product", username, password);
+                        String selectQuery = "SELECT * FROM Product WHERE product_id = ?";
+                        PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
+                        preparedStatement.setInt(1, productId);
+                        System.out.println("flag1");
+                        ResultSet resultSet = preparedStatement.executeQuery();
+                        System.out.println("flag2");
 
-                        sendResponse(exchange, 400, responseToClient.toString());
-                    } finally {
-                        workRunning--;
-                    }
+                        if (resultSet.next()) {
+                            String product_id = resultSet.getString("product_id");
+                            String user_id = resultSet.getString("user_id");
+                            Integer count = resultSet.getInt("quantity");
+                            orderId += 1;
+                            System.out.println("flag20");
+                            if (count < quantity) {
+                                System.out.println("flag2");
+                                responseToClient
+                                        .put("id", orderId)
+                                        .put("product_id", product_id)
+                                        .put("user_id", userId)
+                                        .put("quantity", count)
+                                        .put("status", "Exceeded quantity limit");
+                                sendResponse(exchange, 400, responseToClient.toString());
+                            } else {
+                                System.out.println("flag3");
+                                //Else, if no sql error and count is bigger or equal, we can process the order
+                                responseToClient
+                                        .put("id", orderId)
+                                        .put("product_id", product_id)
+                                        .put("user_id", userId)
+                                        .put("quantity", count)
+                                        .put("status", "Success");
+                                sendResponse(exchange, 200, responseToClient.toString());
+                        }
+                        //Close
+                        resultSet.close();
+                        preparedStatement.close();
+                        connection.close();
+
+                        System.out.println("User ID: " + userId);
+                        System.out.println("Product ID: " + productId);
+                        System.out.println("Quantity: " + quantity);
+                        } else {
+                            System.out.println("No product found with the specified productId");
+                        }
+                } catch (SQLException e) {
+                    responseToClient.put("status", "Invalid Request");
+                    sendResponse(exchange, 400, responseToClient.toString());
+                } finally {
+                    workRunning--;
+                }
                 }else{
                     JSONObject responseToClient = new JSONObject();
                     responseToClient
@@ -407,13 +399,15 @@ public class OrderService {
     }
 
     private static boolean doesProductIdExist(int productId) throws SQLException {
-        String jdbcUrl = "jdbc:sqlite:src/ProductService/ProductDatabase.db";
+        String jdbcUrl = "jdbc:postgresql://localhost:5432/product";
+        String username = "postgres"; 
+        String password = "password"; 
         boolean exists = false;
     
-        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password);
              PreparedStatement preparedStatement = connection.prepareStatement(
-                 "SELECT COUNT(*) FROM Product WHERE productId = ?")) {
-            
+                     "SELECT COUNT(*) FROM Product WHERE productId = ?")) { // Ensure your table and column names are correct
+                
             preparedStatement.setInt(1, productId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
@@ -425,9 +419,11 @@ public class OrderService {
     }
 
     private static boolean doesUserIdExist(int userId) throws SQLException {
-        String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
+        String jdbcUrl = "jdbc:postgresql://localhost:5432/users";
+        String username = "postgres"; 
+        String password = "password"; 
         boolean exists = false;
-        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password);
              PreparedStatement preparedStatement = connection.prepareStatement(
                  "SELECT COUNT(*) FROM User WHERE user_id = ?")) {
             
