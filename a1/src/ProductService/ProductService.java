@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.io.*; 
+import java.util.*;
+import java.net.URLDecoder;
 
 //import JSONObject
 import org.json.JSONObject;
@@ -111,7 +114,7 @@ public class ProductService {
                         if (duplicateResultSet.next()) {
                             // Duplicate ID found
                             int statusCode = 409; // Conflict
-                            sendResponse(exchange, statusCode, "");
+                            sendResponse(exchange, statusCode, "status: Conflict");
                             return;
                         }
                 
@@ -145,7 +148,7 @@ public class ProductService {
                     } catch (JSONException e) {
                         System.out.println("Status code 400 in post create");
                         int statusCode = 400;
-                        sendResponse(exchange, statusCode, "");
+                        sendResponse(exchange, statusCode, "Bad Request");
                     }
                 } else if (command.equals("update")) {
                     /* update product */
@@ -265,7 +268,7 @@ public class ProductService {
                             selectStatement.close();
                 
                             int statusCode = 401;
-                            sendResponse(exchange, statusCode, "");
+                            sendResponse(exchange, statusCode, "Unauthorized");
                         }
                     } catch (SQLException e) {
                         System.out.println("you screw up at post delete");
@@ -297,9 +300,8 @@ public class ProductService {
                     createNewDatabase();
                 }
                 try{
-                    String[] pathSegments = exchange.getRequestURI().getPath().split("/");
-
-                    int id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
+                    String id_value = extractQueryParameter(exchange, "id");
+                    int id_int = Integer.parseInt(id_value);
         
                     // Get product information
                     JSONObject responseBody = createResponse(exchange, "", id_int);
@@ -491,6 +493,21 @@ public class ProductService {
         OutputStream os = exchange.getResponseBody();
         os.write(response.getBytes(StandardCharsets.UTF_8));
         os.close();
+    }
+
+    public static String extractQueryParameter(HttpExchange exchange, String parameterName) {
+        String query = exchange.getRequestURI().getQuery();
+        Map<String, String> queryPairs = new HashMap<>();
+        String[] pairs = query.split("&");
+        for (String pair : pairs) {
+            int idx = pair.indexOf("=");
+            try {
+                queryPairs.put(URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8.name()), URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name()));
+            } catch (UnsupportedEncodingException e) {
+                throw new AssertionError("UTF-8 is not supported", e);
+            }
+        }
+        return queryPairs.get(parameterName);
     }
 
 }
