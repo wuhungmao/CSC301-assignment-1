@@ -407,36 +407,6 @@ public class OrderService {
         return "response";
     }
 
-    // Send POST Request to urlString with jsonInputString, return responses as string
-    public static String sendPostRequest(String urlString, String jsonInputString) throws IOException {
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setDoOutput(true);
-
-        // Send the request body
-        try (OutputStream os = connection.getOutputStream()) {
-            byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
-            os.write(input, 0, input.length);
-        }
-
-        // Read the response
-        int responseCode = connection.getResponseCode();
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) ? connection.getInputStream() : connection.getErrorStream(),
-                StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-        } finally {
-            connection.disconnect();
-        }
-        return response.toString();
-    }
-
     //GET forward
     public static int forwardGetRequest(String targetURL) throws IOException, InterruptedException {
         URL url = URI.create(targetURL).toURL();
