@@ -1,0 +1,37 @@
+{
+    "order_create_200": {
+        "command": "place order",
+        "product_id": 2011,
+        "user_id": 1009,
+        "quantity": 20
+    },
+    "order_create_400_missing_user_id": {
+        "command": "place order",
+        "product_id": 2012,
+        "quantity": 1
+    },
+    "order_create_404_invalid_user_id": {
+        "command": "place order",
+        "product_id": 2013,
+        "user_id": 10000,
+        "quantity": 2
+    },
+    "order_create_404_invalid_product_id": {
+        "command": "place order",
+        "product_id": 10000,
+        "user_id": 1009,
+        "quantity": 3
+    },
+    "order_create_400_invalid_quantity": {
+        "command": "place order",
+        "product_id": 2014,
+        "user_id": 1009,
+        "quantity": -1
+    },
+    "order_create_400,409_exceeded_quantity": {
+        "command": "place order",
+        "product_id": 2011,
+        "user_id": 1009,
+        "quantity": 9
+    }
+}
