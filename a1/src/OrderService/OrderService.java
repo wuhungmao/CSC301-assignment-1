@@ -96,8 +96,8 @@ public class OrderService {
             productURL = "http://" + productServiceIP + ":" + productPort + "/product";
             userURL = "http://" + userServiceIP + ":" + userPort + "/user";
 
-            //System.out.println(productURL);
-            //System.out.println(userURL);
+            System.out.println(productURL);
+            System.out.println(userURL);
 
             // Extract IP address and port
             String ipAddress = orderServiceConfig.getString("ip");
@@ -149,7 +149,7 @@ public class OrderService {
                             preparedStatementUser.setInt(1, userId);
                             try (ResultSet resultSetUser = preparedStatementUser.executeQuery()) {
                                 if (!resultSetUser.next()) {
-                                    responseToClient.put("status", "User not found");
+                                    responseToClient.put("status", "Invalid Request");
                                     sendResponse(exchange, 404, responseToClient.toString());
                                     return;
                                 }
@@ -164,14 +164,16 @@ public class OrderService {
                             preparedStatementProduct.setInt(1, productId);
                             try (ResultSet resultSetProduct = preparedStatementProduct.executeQuery()) {
                                 if (!resultSetProduct.next()) {
-                                    responseToClient.put("status", "Product not found");
+                                    responseToClient.put("status", "Invalid Request");
                                     sendResponse(exchange, 404, responseToClient.toString());
                                     return;
                                 } else {
                                     int count = resultSetProduct.getInt("quantity");
+                                    System.out.println("Database Quantity (count): " + count);
+                                    System.out.println("Requested Quantity: " + quantity);
                                     if (count < quantity) {
                                         responseToClient.put("status", "Exceeded quantity limit");
-                                        sendResponse(exchange, 400, responseToClient.toString());
+                                        sendResponse(exchange, 409, responseToClient.toString());
                                     } else {
                                         responseToClient.put("product_id", productId);  
                                         responseToClient.put("quantity", quantity);     
@@ -185,11 +187,11 @@ public class OrderService {
                         }
                     }
                 } catch (SQLException e) {
-                    responseToClient.put("status", "Database error");
+                    responseToClient.put("status", "Invalid Request");
                     sendResponse(exchange, 500, responseToClient.toString());
                     System.err.println("SQLException: " + e.getMessage());
                 } catch (JSONException e) {
-                    responseToClient.put("status", "JSON Parsing error");
+                    responseToClient.put("status", "Invalid Request");
                     sendResponse(exchange, 400, responseToClient.toString());
                 }
             } else if ("shutdown".equals(command)) {
@@ -199,7 +201,7 @@ public class OrderService {
                 System.out.println("Server has been shut down gracefully.");
                 System.exit(0); // Shutdown the server
             } else {
-                responseToClient.put("status", "Invalid Command");
+                responseToClient.put("status", "Invalid Request");
                 sendResponse(exchange, 400, responseToClient.toString());
             }
         }
@@ -341,6 +343,7 @@ public class OrderService {
     //POST forward
     public static String forwardRequest(String targetURL, JSONObject jsonData) throws IOException, InterruptedException {
         URL url = URI.create(targetURL).toURL();
+        StringBuilder response = new StringBuilder();
         String body = jsonData.toString();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -348,15 +351,25 @@ public class OrderService {
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
         connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Accept", "application/json");
 
         // Get the response code
         try(DataOutputStream dos = new DataOutputStream(connection.getOutputStream())){
             dos.writeBytes(body);
         }
-        connection.disconnect();
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+            String responseLine = null;
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine.trim());
+            }
+        }
+        finally{
+            connection.disconnect();
+        }
         return "response";
-
     }
+
     //GET forward
     public static int forwardGetRequest(String targetURL) throws IOException, InterruptedException {
         URL url = URI.create(targetURL).toURL();
