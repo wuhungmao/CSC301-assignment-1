@@ -1,0 +1,14 @@
+{
+    "order_create_200": {
+        "command": "place order",
+        "product_id": 2011,
+        "user_id": 1009,
+        "quantity": 20
+    },
+    "order_create_400,409_exceeded_quantity": {
+        "command": "place order",
+        "product_id": 2011,
+        "user_id": 1009,
+        "quantity": 9
+    }
+}
