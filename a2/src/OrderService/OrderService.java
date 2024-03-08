@@ -189,13 +189,13 @@ public class OrderService {
                                     System.out.println("product_id is " + product_id);
                                     System.out.println("quantity is " + (quantity_database - quantity_wanted));
  
-                                    JSONObject requestToProduct = new JSONObject();
-                                    requestToProduct.put("command", "update")
-                                                    .put("product_id", product_id)
-                                                    .put("quantity", quantity_database - quantity_wanted);
-                                    
-                                    //need to update product database here, but it somehow fails
-                                    forwardRequest("http://127.0.0.1:8080/product/", requestToProduct);
+                                    String jsonBody = String.format("{\"command\": \"update\", \"product_id\": %d, \"quantity\": %d}", product_id, quantity_database - quantity_wanted);
+                                    // Update product database
+                                    try {
+                                        String response = sendPostRequest("http://127.0.0.1:8080/product/", jsonBody);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
 
                                     System.out.println("after creating product request");
                                     responseToClient
@@ -231,7 +231,7 @@ public class OrderService {
                         responseToClient
                             .put("status", "Invalid Request");
                         sendResponse(exchange, 400, responseToClient.toString());
-                    } catch (IOException | InterruptedException e) {
+                    } catch (IOException e) {
                         responseToClient.put("status", "Invalid Request");
                         sendResponse(exchange, 400, responseToClient.toString());
                     }finally {
@@ -263,9 +263,10 @@ public class OrderService {
                 String command = requestBody.getString("command");
                 if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                     try {
-                        forwardRequest(userURL, requestBody);
+                        String jsonAsString = requestBody.toString();
+                        String response = sendPostRequest(userURL, jsonAsString);
                         sendResponse(exchange, 200, "forward");
-                    } catch (IOException | InterruptedException e) {
+                    } catch (IOException e) {
                         JSONObject responseToClient = new JSONObject();
                         responseToClient.put("status", "Invalid Request");
                         sendResponse(exchange, 400, responseToClient.toString());
@@ -302,9 +303,10 @@ public class OrderService {
                     String command = requestBody.getString("command");
                     if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                         try {
-                            forwardRequest(productURL, requestBody);
+                            String jsonAsString = requestBody.toString();
+                            String response = sendPostRequest(productURL, jsonAsString);
                             sendResponse(exchange, 200, "forward");
-                        } catch (IOException | InterruptedException e) {
+                        } catch (IOException e) {
                             JSONObject responseToClient = new JSONObject();
                             responseToClient.put("status", "Invalid Request");
                             sendResponse(exchange, 400, responseToClient.toString());
@@ -388,23 +390,32 @@ public class OrderService {
         System.exit(0); // Exit the application
     }
 
-    //POST forward
-    public static String forwardRequest(String targetURL, JSONObject jsonData) throws IOException, InterruptedException {
-        URL url = URI.create(targetURL).toURL();
-        String body = jsonData.toString();
+    // Send POST Request to urlString with jsonInputString, return responses as string
+    public static String sendPostRequest(String urlString, String jsonInputString) throws IOException {
+        URL url = URI.create(urlString).toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-        // Set the request method to GET
         connection.setRequestMethod("POST");
-        connection.setDoOutput(true);
         connection.setRequestProperty("Content-Type", "application/json");
-
-        // Get the response code
-        try(DataOutputStream dos = new DataOutputStream(connection.getOutputStream())){
-            dos.writeBytes(body);
+        connection.setDoOutput(true);
+        // Send the request body
+        try (OutputStream os = connection.getOutputStream()) {
+            byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
+            os.write(input, 0, input.length);
         }
-        connection.disconnect();
-        return "response";
+        // Read the response
+        int responseCode = connection.getResponseCode();
+        StringBuilder response = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) ? connection.getInputStream() : connection.getErrorStream(),
+                StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+        } finally {
+            connection.disconnect();
+        }
+        return response.toString();
     }
 
     //GET forward
