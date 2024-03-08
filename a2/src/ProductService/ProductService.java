@@ -36,6 +36,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class ProductService {
     static String jdbcUrl = "jdbc:sqlite:src/ProductService/ProductDatabase.db";
+    public static Map<String, JSONObject> cache = new HashMap<>();//cache
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
@@ -113,7 +114,13 @@ public class ProductService {
                                 // Close resources for duplicate check
                                 duplicateResultSet.close();
                                 checkDuplicateStatement.close();
-                                
+                                //cache
+                                JSONObject info = new JSONObject();
+                                info.put("name", productName);
+                                info.put("description", description);
+                                info.put("price", price_double);
+                                info.put("quantity", quantity);
+                                cache.put(id, info);
                                 // Continue with insertion
                                 String insertQuery = "INSERT INTO Product (productId, productName, description, price, quantity) VALUES (?, ?, ?, ?, ?)";
                                 PreparedStatement preparedStatement = connection.prepareStatement(insertQuery);
@@ -168,6 +175,7 @@ public class ProductService {
                         if(requestbody.has("id")) {
                             // Get body parameters
                             int id_int = requestbody.getInt("id");
+                            String id = String.valueOf(id_int);//for cache
                             
                             // Build the dynamic part of the UPDATE query based on provided attributes
                             StringBuilder updateQueryBuilder = new StringBuilder("UPDATE Product SET ");
@@ -197,10 +205,12 @@ public class ProductService {
                             
                             // Set values for each attribute
                             int parameterIndex = 1;
+                            JSONObject original_info = cache.get(id);
                             if (requestbody.has("name")) {
                                 String name = requestbody.getString("name");
                                 if(!name.isEmpty()){
                                     preparedStatement.setString(parameterIndex++, name);
+                                    original_info.put("name", requestbody.getString("name"));
                                 } else {
                                     throw new IllegalArgumentException("name cannot be empty.");
                                 }
@@ -210,6 +220,7 @@ public class ProductService {
                                 String description = requestbody.getString("description");
                                 if(!description.isEmpty()){
                                     preparedStatement.setString(parameterIndex++, description);
+                                    original_info.put("description", requestbody.getString("description"));
                                 } else {
                                     throw new IllegalArgumentException("description cannot be empty.");
                                 }
@@ -219,6 +230,7 @@ public class ProductService {
                                 Double price = requestbody.getDouble("price");
                                 if(price > 0){
                                     preparedStatement.setDouble(parameterIndex++, price);
+                                    original_info.put("price", requestbody.getString("price"));
                                 } else {
                                     throw new IllegalArgumentException("price cannot be 0.");
                                 }
@@ -228,6 +240,7 @@ public class ProductService {
                                 int quantity = requestbody.getInt("quantity");
                                 if(quantity > 0){
                                     preparedStatement.setDouble(parameterIndex++, quantity);
+                                    original_info.put("quantity", requestbody.getString("quantity"));
                                 } else {
                                     throw new IllegalArgumentException("quantity cannot be 0.");
                                 }
@@ -247,6 +260,7 @@ public class ProductService {
                             sendResponse(exchange, statusCode, responseBody.toString());
                             
                             if (rowsAffected > 0) {
+                                cache.put(id ,original_info);
                                 System.out.println("Product information updated successfully.");
                             } 
                         } else {
@@ -298,6 +312,7 @@ public class ProductService {
                         }
 
                         int id_int = requestbody.getInt("id");
+                        String id = String.valueOf(id_int);//for cache
                         String productName = requestbody.getString("name");
                         // String description = requestbody.getString("description");
                         double price = requestbody.getDouble("price");
@@ -331,6 +346,10 @@ public class ProductService {
                 
                             int statusCode = (rowsAffected > 0) ? 200 : 404; // 404 if no product found
                             sendResponse(exchange, statusCode, responseBody.toString());
+                            if (rowsAffected > 0) {
+                                cache.remove(id);//delete from cache
+                                }
+
                 
                             // if (rowsAffected > 0) {
                             //     System.out.println("Product deleted successfully.");
@@ -409,6 +428,7 @@ public class ProductService {
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
 
                     int id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
+                    String id = String.valueOf(id_int);//for cache
 
                     String selectQuery = "SELECT * FROM Product WHERE productId = ?";
                     PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
@@ -418,10 +438,19 @@ public class ProductService {
             
                     if (resultSet.next()) {
                         // Get product information
-                        JSONObject responseBody = createResponse(exchange, "", id_int);
+                        //JSONObject responseBody = createResponse(exchange, "", id_int);
+                        if (cache.containsKey(id)) {//get info directly from cache
+                            JSONObject responseBody = cache.get(id);
+                            int statusCode = 200;
+                            sendResponse(exchange, statusCode, responseBody.toString());
+                        }else{
+                            int statusCode = 400;
+                            JSONObject responseBody = new JSONObject();
+                            sendResponse(exchange, statusCode, responseBody.toString());
+                        }
                 
-                        int statusCode = 200;
-                        sendResponse(exchange, statusCode, responseBody.toString());
+//                        int statusCode = 200;
+//                        sendResponse(exchange, statusCode, responseBody.toString());
                     } else {
                         //no product with product id given
                         JSONObject responseBody = new JSONObject();
