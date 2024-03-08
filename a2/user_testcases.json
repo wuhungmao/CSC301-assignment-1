@@ -1,0 +1,178 @@
+{
+    "user_create_200_1000": {
+        "command": "create",
+        "id": 1000,
+        "username": "tester1000",
+        "email": "test1000@test.com",
+        "password": "password1000"
+    },
+    "user_create_200_1001": {
+        "command": "create",
+        "id": 1001,
+        "username": "tester1001",
+        "email": "test1001@test.com",
+        "password": "password1001"
+    },
+
+    "user_create_200_1002": {
+        "command": "create",
+        "id": 1002,
+        "username": "tester1002",
+        "email": "test1002@test.com",
+        "password": "password1002"
+    },
+
+    "user_create_200_1003": {
+        "command": "create",
+        "id": 1003,
+        "username": "tester1003",
+        "email": "test1003@test.com",
+        "password": "password1003"
+    },
+
+    "user_create_200_1004": {
+        "command": "create",
+        "id": 1004,
+        "username": "tester1004",
+        "email": "test1004@test.com",
+        "password": "password1004"
+    },
+
+    "user_create_200_1005": {
+        "command": "create",
+        "id": 1005,
+        "username": "tester1005",
+        "email": "test1005@test.com",
+        "password": "password1005"
+    },
+
+    "user_create_200_1006": {
+        "command": "create",
+        "id": 1006,
+        "username": "tester1006",
+        "email": "test1006@test.com",
+        "password": "password1006"
+    },
+    "user_create_200_1007": {
+        "command": "create",
+        "id": 1007,
+        "username": "tester1007",
+        "email": "test1007@test.com",
+        "password": "password1007"
+    },
+    "user_create_200_1008": {
+        "command": "create",
+        "id": 1008,
+        "username": "tester1008",
+        "email": "test1008@test.com",
+        "password": "password1008"
+    },
+    "user_create_200_1009": {
+        "command": "create",
+        "id": 1009,
+        "username": "tester1009",
+        "email": "test1009@test.com",
+        "password": "password1009"
+    },
+    "user_create_400_empty_username_1010": {
+        "command": "create",
+        "id": 1010,
+        "username": "",
+        "email": "test1010@test.com",
+        "password": "password1010"
+    },
+    "user_create_400_missing_password_1011": {
+        "command": "create",
+        "id": 1011,
+        "username": "tester1011",
+        "email": "test1011@test.com"
+    },
+    "user_create_400_invalid_email_type_1012": {
+        "command": "create",
+        "id": 1012,
+        "username": "tester1012",
+        "email": 1012,
+        "password": "password1012"
+    },
+    "user_create_409_duplicate_userID_1000": {
+        "command": "create",
+        "id": 1000,
+        "username": "tester1000-duplicate",
+        "email": "test1000-duplicate@test.com",
+        "password": "password1000-duplicate"
+    },
+    "user_update_200_email_password_1001": {
+        "command": "update",
+        "id": 1001,
+        "username": "tester1001-update",
+        "email": "testupdate1001@test.com",
+        "password": "password1001-update"
+    },
+    "user_update_200_only_required_fields_1002": {
+        "command": "update",
+        "id": 1002
+    },
+    "user_update_400_missing_id": {
+        "command": "update",
+        "username": "tester-update",
+        "email": "testupdate@test.com"
+    },
+    "user_update_400_invalid_email_type_1003": {
+        "command": "update",
+        "id": 1003,
+        "email": 1003
+    },
+    "user_update_400_empty_email_password_1004": {
+        "command": "update",
+        "id": 1004,
+        "username": "tester1004-update",
+        "email": "",
+        "password": ""
+    },    
+    "user_update_404_invalid_id": {
+        "command": "update",
+        "id": 10001,
+        "username": "tester10001-update",
+        "email": "testupdate10001@test.com",
+        "password": "password10001"
+    },
+    "user_delete_200_1005": {
+        "command": "delete",
+        "id": 1005,
+        "username": "tester1005",
+        "email": "test1005@test.com",
+        "password": "password1005"
+    },
+    "user_delete_400_missing_email_field_1006": {
+        "command": "delete",
+        "id": 1006,
+        "username": "tester1006",
+        "password": "password1006"
+    },
+    "user_delete_404_invalid_id": {
+        "command": "delete",
+        "id": 10002,
+        "username": "tester10002",
+        "email": "test10002@test.com",
+        "password": "password10002"
+    },
+    "user_delete_404,401_fields_dont_match_1007": {
+        "command": "delete",
+        "id": 1007,
+        "username": "tester1007",
+        "email": "test1007@test.com",
+        "password": "WrongPassword"
+    },
+    "user_get_200_1000": {
+        "id": 1000
+    },
+    "user_get_200_1001": {
+        "id": 1001
+    },
+    "user_get_400_invalid_type": {
+        "id": "abcd"
+    },
+    "user_get_404,400_invalid_id": {
+        "id": 10000
+    }
+}

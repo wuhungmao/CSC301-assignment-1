@@ -1,0 +1,9 @@
+{
+    "product_create_200_2011": {
+        "id": 2011,
+        "name": "product2011",
+        "description": "This is product 2011",
+        "price": 8.50,
+        "quantity": 28
+    }
+}
