@@ -33,6 +33,7 @@ import java.util.concurrent.Executors;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.io.IOException;
+import java.sql.Statement;
 
 
 //import JSONObject
@@ -71,9 +72,9 @@ Note: this means that to place an order, you may have to first make a GET reques
 public class OrderService {
     public static HttpServer server;
     public static ExecutorService httpThreadPool;
-    public static String jdbcUrl = "jdbc:sqlite:UserDatabase.db";
+    public static String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
     private static final String ISCS_ENDPOINT = "http://127.0.0.0.1/forward";
-    private static final String jdbcUrlO = "jdbc:sqlite:db/OrderService/OrderDatabase.db";
+    private static final String jdbcUrl2 = "jdbc:sqlite:src/OrderService/OrderDatabase.db";
 
     //Shutdown Signals
     public static int workRunning = 0;
@@ -206,12 +207,17 @@ public class OrderService {
                                     String jsonBody = String.format("{\"command\": \"update\", \"product_id\": %d, \"quantity\": %d}", product_id, quantity_database - quantity_wanted);
                                     // Update product database
                                     
-                                    Connection connection2 = DriverManager.getConnection(jdbcUrlO);
-                                    String insertQuery = "INSERT INTO Orders (user_id, product_id, quantity) VALUES (?, ?, ?)";
+                                    Connection connection2 = DriverManager.getConnection(jdbcUrl2);
+                                    System.out.println("here11111");
+                                    String insertQuery = "INSERT INTO Orders (orderId, userId, productId, quantity) VALUES (?, ?, ?, ?)";
                                     try (PreparedStatement preparedStatementInsert = connection2.prepareStatement(insertQuery)) {
-                                        preparedStatementInsert.setInt(1, userId);
-                                        preparedStatementInsert.setInt(2, product_id);
-                                        preparedStatementInsert.setInt(3, quantity_wanted);
+                                        System.out.println("here1111");
+                                        preparedStatementInsert.setInt(2, userId);
+                                        System.out.println("here111");
+                                        preparedStatementInsert.setInt(3, productId);
+                                        System.out.println("here11");
+                                        preparedStatementInsert.setInt(4, quantity_wanted);
+                                        System.out.println("here1");
                                         preparedStatementInsert.executeUpdate();
                                     }
                                     try {
@@ -365,32 +371,61 @@ public class OrderService {
                 String[] parts = path.split("/");
 
                 if (parts.length > 2) {
-                    int userId = Integer.parseInt(parts[3]);  // Assuming the URL pattern is /user/purchased/{userId}
+                    int userId = Integer.parseInt(parts[3]);  
                     JSONObject responseJson = new JSONObject();
 
-                    try (Connection connection = DriverManager.getConnection("jdbc:sqlite:your_database_path.db")) {
-                        String selectQuery = "SELECT product_id, SUM(quantity) as total_quantity FROM Orders WHERE user_id = ? GROUP BY product_id";
-                        try (PreparedStatement stmt = connection.prepareStatement(selectQuery)) {
-                            stmt.setInt(1, userId);
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                        String checkUserQuery = "SELECT COUNT(*) AS count FROM User WHERE user_id = ?";
+                        try (PreparedStatement stmt = connection.prepareStatement(checkUserQuery)) {
+                            stmt.setInt(1, userId); 
                             ResultSet rs = stmt.executeQuery();
 
-                            JSONObject purchases = new JSONObject();
-                            while (rs.next()) {
-                                int productId = rs.getInt("product_id");
-                                int quantity = rs.getInt("total_quantity");
-                                purchases.put(String.valueOf(productId), quantity);
-                            }
-                            responseJson.put("userId", userId);
-                            responseJson.put("purchases", purchases);
+                            if (rs.next() && rs.getInt("count") > 0) {
+                                try (Connection connection2 = DriverManager.getConnection("jdbc:sqlite:src/OrderService/OrderDatabase.db")) {
+                                    String selectQuery = "SELECT productId, SUM(quantity) as quantity FROM Orders WHERE userId = ? GROUP BY productId";
+                                    try (PreparedStatement stmt2 = connection2.prepareStatement(selectQuery)) {
+                                        stmt2.setInt(1, userId);
+                                        ResultSet rs2 = stmt2.executeQuery();
 
-                            String response = responseJson.toString();
-                            exchange.sendResponseHeaders(200, response.getBytes().length);
-                            OutputStream os = exchange.getResponseBody();
-                            os.write(response.getBytes());
-                            os.close();
+                                        JSONObject purchases = new JSONObject();
+                                        while (rs2.next()) {
+                                            int productId = rs2.getInt("productId");
+                                            int quantity = rs2.getInt("quantity");
+                                            purchases.put(productId, quantity);
+                                        }
+
+                                        byte[] responseBytes;
+                                        if (purchases.isEmpty()) {
+                                             responseBytes = "{}".getBytes();
+                                            exchange.sendResponseHeaders(200, responseBytes.length);
+                                        } else {
+                                            String jsonResponse = purchases.toString();
+                                            responseBytes = jsonResponse.getBytes();
+                                            exchange.sendResponseHeaders(200, responseBytes.length);
+                                        }
+                                        
+                                        OutputStream os = exchange.getResponseBody();
+                                        os.write(responseBytes); 
+                                        os.close();
+                                    }
+                                } catch (SQLException e) {
+                                    e.printStackTrace(); 
+                                }
+                            } else {
+                                String response = "";
+                                exchange.sendResponseHeaders(404, response.getBytes().length);
+                                OutputStream os = exchange.getResponseBody();
+                                os.write(response.getBytes());
+                                os.close();
+                            }
                         }
                     } catch (SQLException e) {
-                        e.printStackTrace(); // Handle the error properly
+                        e.printStackTrace();
+                        String response = "Invalid Request";
+                        exchange.sendResponseHeaders(500, response.getBytes().length);
+                        OutputStream os = exchange.getResponseBody();
+                        os.write(response.getBytes());
+                        os.close();
                     }
                 } else {
                     String response = "Invalid request";
@@ -414,20 +449,20 @@ public class OrderService {
                     System.out.println("Failed to delete the existing database.");
                 }
             }
-            
-        try (Connection connection = DriverManager.getConnection(jdbcUrlO)) {
+
+        try (Connection connection = DriverManager.getConnection(jdbcUrl2)) {
             // Create Purchases table
-            String createPurchasesTableQuery = "CREATE TABLE IF NOT EXISTS Purchases ("
-                    + "purchaseId INTEGER PRIMARY KEY,"
+            String createPurchasesTableQuery = "CREATE TABLE IF NOT EXISTS Orders ("
+                    + "orderId INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + "userId INTEGER NOT NULL,"
                     + "productId INTEGER NOT NULL,"
-                    + "quantity INTEGER NOT NULL,"
-                    + "purchaseDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    + "FOREIGN KEY(userId) REFERENCES User(userId),"
-                    + "FOREIGN KEY(productId) REFERENCES Product(productId))";
+                    + "quantity INTEGER NOT NULL)";
             try (Statement statement = connection.createStatement()) {
-                statement.executeUpdate(createPurchasesTableQuery);
-                System.out.println("Purchases table created successfully in a new database.");
+                    // Execute the query to create the Product table
+                    statement.executeUpdate(createPurchasesTableQuery);
+                    System.out.println("Product table created successfully in a new database.");
+            } catch (SQLException sqle) {
+                System.out.println("Error creating Product table: " + sqle.getMessage());
             }
         } catch (SQLException e) {
             System.out.println("Error creating new database: " + e.getMessage());
