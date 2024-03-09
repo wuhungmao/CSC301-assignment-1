@@ -73,12 +73,15 @@ public class OrderService {
     public static ExecutorService httpThreadPool;
     public static String jdbcUrl = "jdbc:sqlite:UserDatabase.db";
     private static final String ISCS_ENDPOINT = "http://127.0.0.0.1/forward";
+    private static final String jdbcUrlO = "jdbc:sqlite:db/OrderService/OrderDatabase.db";
 
     //Shutdown Signals
     public static int workRunning = 0;
     public static String userURL = "";
     public static String productURL = "";
+    public static String ISCSURL = "";
     public static int orderId = 0;
+    public static int requestCount = 0;
 
     public static void main(String[] args) throws IOException {
         
@@ -94,12 +97,18 @@ public class OrderService {
             String productServiceIP = productServiceConfig.getString("ip"); 
             Integer productPort = productServiceConfig.getInt("port"); 
 
+            JSONObject ISCSconfig = config.getJSONObject("InterServiceCommunication");
+            String ISCSip = ISCSconfig.getString("ip"); 
+            Integer ISCSport = ISCSconfig.getInt("port"); 
+
             JSONObject userServiceConfig = config.getJSONObject("UserService");
             String userServiceIP = userServiceConfig.getString("ip"); 
             Integer userPort = userServiceConfig.getInt("port"); 
 
             productURL = "http://" + productServiceIP + ":" + productPort + "/product";
             userURL = "http://" + userServiceIP + ":" + userPort + "/user";
+            ISCSURL = "http://" + ISCSip + ":" + ISCSport + "/user";
+
 
             //System.out.println(productURL);
             //System.out.println(userURL);
@@ -113,12 +122,14 @@ public class OrderService {
 
             OrderHandler newHandler = new OrderHandler();
             UserHandler newHandler2 = new UserHandler();
-            ProductHandler newHandler3 = new ProductHandler();
+            UserPurchaseHandler newHandler3 = new UserPurchaseHandler();
+            ProductHandler newHandler4 = new ProductHandler();
             server.setExecutor(Executors.newFixedThreadPool(10)); 
             
             server.createContext("/order", newHandler);
             server.createContext("/user", newHandler2);
-            server.createContext("/product", newHandler3);
+            server.createContext("/user/purchased", newHandler3);
+            server.createContext("/product", newHandler4);
             server.start();
             System.out.println("OrderService IP Address: " + ipAddress);
             System.out.println("OrderService Port: " + port);
@@ -133,9 +144,14 @@ public class OrderService {
     static class OrderHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            requestCount++;
             JSONObject requestBody = getRequestBody(exchange);
             String command = requestBody.getString("command");
             if ("POST".equals((exchange.getRequestMethod()))) {
+                if (requestCount == 1 && !command.equals("restart")) {
+                    System.out.println("Creating new database");
+                    createNewDatabase();
+                }
                 if ("place order".equals(command) == true) {
                     JSONObject responseToClient = new JSONObject();
                     try {
@@ -170,7 +186,6 @@ public class OrderService {
                                 System.out.println("test1");
                                 int product_id = resultSet.getInt("productId");
                                 System.out.println("test2");
-                                System.out.println("test4");
                                 Integer quantity_database = resultSet.getInt("quantity");
                                 System.out.println("test5");
                                 orderId += 1;
@@ -183,7 +198,6 @@ public class OrderService {
                                     sendResponse(exchange, 400, responseToClient.toString());
                                 } else {
                                     System.out.println("before creating product request");
-                                    //Else, if no sql error and count is bigger or equal, we can process the order
 
                                     //Create a post request to product server so that it can decrease number of product in database by quantity
                                     System.out.println("product_id is " + product_id);
@@ -191,8 +205,17 @@ public class OrderService {
  
                                     String jsonBody = String.format("{\"command\": \"update\", \"product_id\": %d, \"quantity\": %d}", product_id, quantity_database - quantity_wanted);
                                     // Update product database
+                                    
+                                    Connection connection2 = DriverManager.getConnection(jdbcUrlO);
+                                    String insertQuery = "INSERT INTO Orders (user_id, product_id, quantity) VALUES (?, ?, ?)";
+                                    try (PreparedStatement preparedStatementInsert = connection2.prepareStatement(insertQuery)) {
+                                        preparedStatementInsert.setInt(1, userId);
+                                        preparedStatementInsert.setInt(2, product_id);
+                                        preparedStatementInsert.setInt(3, quantity_wanted);
+                                        preparedStatementInsert.executeUpdate();
+                                    }
                                     try {
-                                        String response = sendPostRequest("http://127.0.0.1:8080/product/", jsonBody);
+                                        String response = sendPostRequest(ISCSURL + "/product", jsonBody);
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
@@ -264,7 +287,7 @@ public class OrderService {
                 if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                     try {
                         String jsonAsString = requestBody.toString();
-                        String response = sendPostRequest(userURL, jsonAsString);
+                        String response = sendPostRequest(ISCSURL + "/user", jsonAsString);
                         sendResponse(exchange, 200, "forward");
                     } catch (IOException e) {
                         JSONObject responseToClient = new JSONObject();
@@ -296,7 +319,7 @@ public class OrderService {
     }
 
     static class ProductHandler implements HttpHandler {
-            @Override
+        @Override
             public void handle(HttpExchange exchange) throws IOException {
                 if ("POST".equals((exchange.getRequestMethod()))) {
                     JSONObject requestBody = getRequestBody(exchange);
@@ -304,7 +327,7 @@ public class OrderService {
                     if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                         try {
                             String jsonAsString = requestBody.toString();
-                            String response = sendPostRequest(productURL, jsonAsString);
+                            String response = sendPostRequest(ISCSURL + "/product", jsonAsString);
                             sendResponse(exchange, 200, "forward");
                         } catch (IOException e) {
                             JSONObject responseToClient = new JSONObject();
@@ -334,6 +357,82 @@ public class OrderService {
                 }
             }
         }
+
+        static class UserPurchaseHandler implements HttpHandler {
+            @Override
+            public void handle(HttpExchange exchange) throws IOException {
+                String path = exchange.getRequestURI().getPath();
+                String[] parts = path.split("/");
+
+                if (parts.length > 2) {
+                    int userId = Integer.parseInt(parts[3]);  // Assuming the URL pattern is /user/purchased/{userId}
+                    JSONObject responseJson = new JSONObject();
+
+                    try (Connection connection = DriverManager.getConnection("jdbc:sqlite:your_database_path.db")) {
+                        String selectQuery = "SELECT product_id, SUM(quantity) as total_quantity FROM Orders WHERE user_id = ? GROUP BY product_id";
+                        try (PreparedStatement stmt = connection.prepareStatement(selectQuery)) {
+                            stmt.setInt(1, userId);
+                            ResultSet rs = stmt.executeQuery();
+
+                            JSONObject purchases = new JSONObject();
+                            while (rs.next()) {
+                                int productId = rs.getInt("product_id");
+                                int quantity = rs.getInt("total_quantity");
+                                purchases.put(String.valueOf(productId), quantity);
+                            }
+                            responseJson.put("userId", userId);
+                            responseJson.put("purchases", purchases);
+
+                            String response = responseJson.toString();
+                            exchange.sendResponseHeaders(200, response.getBytes().length);
+                            OutputStream os = exchange.getResponseBody();
+                            os.write(response.getBytes());
+                            os.close();
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace(); // Handle the error properly
+                    }
+                } else {
+                    String response = "Invalid request";
+                    exchange.sendResponseHeaders(400, response.getBytes().length);
+                    OutputStream os = exchange.getResponseBody();
+                    os.write(response.getBytes());
+                    os.close();
+                }
+            }
+        }
+
+    private static void createNewDatabase() {
+        File databaseFile = new File("db/OrderDatabase.db");
+        
+            // Check if the database file exists
+            if (databaseFile.exists()) {
+                // Delete the existing database file
+                if (databaseFile.delete()) {
+                    System.out.println("Existing database deleted successfully.");
+                } else {
+                    System.out.println("Failed to delete the existing database.");
+                }
+            }
+            
+        try (Connection connection = DriverManager.getConnection(jdbcUrlO)) {
+            // Create Purchases table
+            String createPurchasesTableQuery = "CREATE TABLE IF NOT EXISTS Purchases ("
+                    + "purchaseId INTEGER PRIMARY KEY,"
+                    + "userId INTEGER NOT NULL,"
+                    + "productId INTEGER NOT NULL,"
+                    + "quantity INTEGER NOT NULL,"
+                    + "purchaseDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    + "FOREIGN KEY(userId) REFERENCES User(userId),"
+                    + "FOREIGN KEY(productId) REFERENCES Product(productId))";
+            try (Statement statement = connection.createStatement()) {
+                statement.executeUpdate(createPurchasesTableQuery);
+                System.out.println("Purchases table created successfully in a new database.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error creating new database: " + e.getMessage());
+        }
+    }
 
     private static void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
         exchange.sendResponseHeaders(statusCode, response.length());
