@@ -391,7 +391,7 @@ public class OrderService {
                                         while (rs2.next()) {
                                             int productId = rs2.getInt("productId");
                                             int quantity = rs2.getInt("quantity");
-                                            purchases.put(productId, quantity);
+                                            purchases.put(String.valueOf(productId), quantity);
                                         }
 
                                         byte[] responseBytes;
