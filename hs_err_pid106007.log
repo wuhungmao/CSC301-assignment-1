@@ -1,0 +1,414 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Cannot create worker GC thread. Out of system resources.
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   The process is running with CompressedOops enabled, and the Java Heap may be blocking the growth of the native heap
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+#   JVM is running with Unscaled Compressed Oops mode in which the Java heap is
+#     placed in the first 4GB address space. The Java Heap base address is the
+#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress
+#     to set the Java Heap base and to place the Java Heap above 4GB virtual address.
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (workerManager.hpp:87), pid=106007, tid=106008
+#
+# JRE version:  (17.0.10+7) (build )
+# Java VM: OpenJDK 64-Bit Server VM (17.0.10+7, mixed mode, sharing, tiered, compressed oops, compressed class ptrs, parallel gc, linux-amd64)
+# Core dump will be written. Default location: Core dumps may be processed with "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -- %E" (or dumping to /student/wuhungma/CSC301/a2/CSC301-assignment-1/core.106007)
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: --add-modules=ALL-SYSTEM --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/sun.nio.fs=ALL-UNNAMED -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Djava.import.generatesMetadataFilesAtProjectRoot=false -DDetectVMInstallationsJob.disabled=true -Dfile.encoding=utf8 -XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms100m -Xlog:disable -javaagent:/student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/lombok/lombok-1.18.31.jar /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/server/plugins/org.eclipse.equinox.launcher_1.6.700.v20231214-2017.jar -configuration /student/wuhungma/.config/Code/User/globalStorage/redhat.java/1.28.1/config_ss_linux -data /student/wuhungma/.config/Code/User/workspaceStorage/0bebc625558a457327327db53fd95171/redhat.java/ss_ws --stdio
+
+Host: Intel(R) Core(TM) i7-9700 CPU @ 3.00GHz, 8 cores, 31G, Ubuntu 22.04.4 LTS
+Time: Tue Mar 12 13:36:18 2024 EDT elapsed time: 0.006000 seconds (0d 0h 0m 0s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00007f68f002b1e0):  JavaThread "Unknown thread" [_thread_in_vm, id=106008, stack(0x00007f68f57b9000,0x00007f68f58b9000)]
+
+Stack: [0x00007f68f57b9000,0x00007f68f58b9000],  sp=0x00007f68f58b7550,  free space=1017k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [libjvm.so+0xee0831]  VMError::report_and_die(int, char const*, char const*, __va_list_tag*, Thread*, unsigned char*, void*, void*, char const*, int, unsigned long)+0x1a1
+V  [libjvm.so+0xee141d]  VMError::report_and_die(Thread*, char const*, int, unsigned long, VMErrorType, char const*, __va_list_tag*)+0x2d
+V  [libjvm.so+0x60a3ac]  report_vm_out_of_memory(char const*, int, unsigned long, VMErrorType, char const*, ...)+0xdc
+V  [libjvm.so+0xf1475f]  WorkerManager::add_workers(WorkGang*, unsigned int, unsigned int, unsigned int, os::ThreadType, bool)+0x18f
+V  [libjvm.so+0xf148fa]  WorkGang::initialize_workers()+0x4a
+V  [libjvm.so+0xc41ccd]  ParallelScavengeHeap::initialize()+0x15d
+V  [libjvm.so+0xe8e872]  universe_init()+0xd2
+V  [libjvm.so+0x7ff8b7]  init_globals()+0x37
+V  [libjvm.so+0xe6505d]  Threads::create_vm(JavaVMInitArgs*, bool*)+0x36d
+V  [libjvm.so+0x8bfb52]  JNI_CreateJavaVM+0x52
+C  [libjli.so+0x9c6f]  JavaMain+0x8f
+C  [libjli.so+0xdf69]  ThreadJavaMain+0x9
+
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x00007f68f6bf5fc0, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+
+Other Threads:
+
+=>0x00007f68f002b1e0 (exited) JavaThread "Unknown thread" [_thread_in_vm, id=106008, stack(0x00007f68f57b9000,0x00007f68f58b9000)]
+
+Threads with active compile tasks:
+
+VM state: not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread: None
+
+Heap address: 0x00000000c0000000, size: 1024 MB, Compressed Oops mode: 32-bit
+
+CDS archive(s) mapped at: [0x0000000000000000-0x0000000000000000-0x0000000000000000), size 0, SharedBaseAddress: 0x0000000800000000, ArchiveRelocationMode: 1.
+Narrow klass base: 0x0000000000000000, Narrow klass shift: 0, Narrow klass range: 0x0
+
+GC Precious Log:
+<Empty>
+
+Heap:
+
+[error occurred during error reporting (printing heap information), id 0xb, SIGSEGV (0xb) at pc=0x00007f68f658111a]
+
+GC Heap History (0 events):
+No events
+
+Dll operation events (1 events):
+Event: 0.003 Loaded shared library /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjava.so
+
+Deoptimization events (0 events):
+No events
+
+Classes unloaded (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+VM Operations (0 events):
+No events
+
+Events (1 events):
+Event: 0.002 Protecting memory [0x00007f68f57b9000,0x00007f68f57bd000] with protection modes 0
+
+
+Dynamic libraries:
+c0000000-100000000 ---p 00000000 00:00 0 
+560a0be6e000-560a0be6f000 r--p 00000000 00:3b 97291793                   /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/bin/java
+560a0be6f000-560a0be70000 r-xp 00001000 00:3b 97291793                   /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/bin/java
+560a0be70000-560a0be71000 r--p 00002000 00:3b 97291793                   /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/bin/java
+560a0be71000-560a0be72000 r--p 00002000 00:3b 97291793                   /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/bin/java
+560a0be72000-560a0be73000 rw-p 00003000 00:3b 97291793                   /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/bin/java
+560a0c675000-560a0c6bd000 rw-p 00000000 00:00 0                          [heap]
+7f68de3d9000-7f68de649000 rwxp 00000000 00:00 0 
+7f68de649000-7f68e5910000 ---p 00000000 00:00 0 
+7f68e5910000-7f68e5b80000 rwxp 00000000 00:00 0 
+7f68e5b80000-7f68e5ea2000 ---p 00000000 00:00 0 
+7f68e5ea2000-7f68e6112000 rwxp 00000000 00:00 0 
+7f68e6112000-7f68ed3d9000 ---p 00000000 00:00 0 
+7f68ed3d9000-7f68f0000000 r--s 00000000 00:3b 109198665                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/modules
+7f68f0000000-7f68f0054000 rw-p 00000000 00:00 0 
+7f68f0054000-7f68f4000000 ---p 00000000 00:00 0 
+7f68f4541000-7f68f4928000 rw-p 00000000 00:00 0 
+7f68f4928000-7f68f4929000 ---p 00000000 00:00 0 
+7f68f4929000-7f68f4a29000 rw-p 00000000 00:00 0 
+7f68f4a29000-7f68f4c29000 ---p 00000000 00:00 0 
+7f68f4c29000-7f68f4c2f000 rw-p 00000000 00:00 0 
+7f68f4c2f000-7f68f4d15000 ---p 00000000 00:00 0 
+7f68f4d15000-7f68f4d1a000 rw-p 00000000 00:00 0 
+7f68f4d1a000-7f68f4e00000 ---p 00000000 00:00 0 
+7f68f4e00000-7f68f56d4000 r--s 00000000 fc:01 393800                     /var/lib/sss/mc/passwd
+7f68f57b9000-7f68f57bd000 ---p 00000000 00:00 0 
+7f68f57bd000-7f68f58b9000 rw-p 00000000 00:00 0 
+7f68f58b9000-7f68f5b0c000 r--p 00000000 00:3b 109198713                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/server/libjvm.so
+7f68f5b0c000-7f68f682b000 r-xp 00253000 00:3b 109198713                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/server/libjvm.so
+7f68f682b000-7f68f6ab7000 r--p 00f72000 00:3b 109198713                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/server/libjvm.so
+7f68f6ab7000-7f68f6ab8000 ---p 011fe000 00:3b 109198713                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/server/libjvm.so
+7f68f6ab8000-7f68f6b71000 r--p 011fe000 00:3b 109198713                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/server/libjvm.so
+7f68f6b71000-7f68f6ba6000 rw-p 012b7000 00:3b 109198713                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/server/libjvm.so
+7f68f6ba6000-7f68f6c00000 rw-p 00000000 00:00 0 
+7f68f6c00000-7f68f6c28000 r--p 00000000 fc:00 7868779                    /usr/lib/x86_64-linux-gnu/libc.so.6
+7f68f6c28000-7f68f6dbd000 r-xp 00028000 fc:00 7868779                    /usr/lib/x86_64-linux-gnu/libc.so.6
+7f68f6dbd000-7f68f6e15000 r--p 001bd000 fc:00 7868779                    /usr/lib/x86_64-linux-gnu/libc.so.6
+7f68f6e15000-7f68f6e16000 ---p 00215000 fc:00 7868779                    /usr/lib/x86_64-linux-gnu/libc.so.6
+7f68f6e16000-7f68f6e1a000 r--p 00215000 fc:00 7868779                    /usr/lib/x86_64-linux-gnu/libc.so.6
+7f68f6e1a000-7f68f6e1c000 rw-p 00219000 fc:00 7868779                    /usr/lib/x86_64-linux-gnu/libc.so.6
+7f68f6e1c000-7f68f6e29000 rw-p 00000000 00:00 0 
+7f68f6e45000-7f68f6e47000 r--p 00000000 fc:00 7905146                    /usr/lib/x86_64-linux-gnu/libnss_sss.so.2
+7f68f6e47000-7f68f6e4e000 r-xp 00002000 fc:00 7905146                    /usr/lib/x86_64-linux-gnu/libnss_sss.so.2
+7f68f6e4e000-7f68f6e50000 r--p 00009000 fc:00 7905146                    /usr/lib/x86_64-linux-gnu/libnss_sss.so.2
+7f68f6e50000-7f68f6e51000 r--p 0000a000 fc:00 7905146                    /usr/lib/x86_64-linux-gnu/libnss_sss.so.2
+7f68f6e51000-7f68f6e52000 rw-p 0000b000 fc:00 7905146                    /usr/lib/x86_64-linux-gnu/libnss_sss.so.2
+7f68f6e52000-7f68f6e58000 r--p 00000000 fc:00 7865550                    /usr/lib/x86_64-linux-gnu/libnss_systemd.so.2
+7f68f6e58000-7f68f6e8a000 r-xp 00006000 fc:00 7865550                    /usr/lib/x86_64-linux-gnu/libnss_systemd.so.2
+7f68f6e8a000-7f68f6e9a000 r--p 00038000 fc:00 7865550                    /usr/lib/x86_64-linux-gnu/libnss_systemd.so.2
+7f68f6e9a000-7f68f6e9e000 r--p 00047000 fc:00 7865550                    /usr/lib/x86_64-linux-gnu/libnss_systemd.so.2
+7f68f6e9e000-7f68f6e9f000 rw-p 0004b000 fc:00 7865550                    /usr/lib/x86_64-linux-gnu/libnss_systemd.so.2
+7f68f6eaf000-7f68f6eb4000 rw-p 00000000 00:00 0 
+7f68f6eb4000-7f68f6ebb000 ---p 00000000 00:00 0 
+7f68f6ebb000-7f68f6ec3000 rw-s 00000000 fc:02 131081                     /tmp/hsperfdata_wuhungma/106007
+7f68f6ec3000-7f68f6ed1000 r--p 00000000 00:3b 109198387                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjava.so
+7f68f6ed1000-7f68f6ee3000 r-xp 0000e000 00:3b 109198387                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjava.so
+7f68f6ee3000-7f68f6ee9000 r--p 00020000 00:3b 109198387                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjava.so
+7f68f6ee9000-7f68f6eea000 ---p 00026000 00:3b 109198387                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjava.so
+7f68f6eea000-7f68f6eeb000 r--p 00026000 00:3b 109198387                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjava.so
+7f68f6eeb000-7f68f6eec000 rw-p 00027000 00:3b 109198387                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjava.so
+7f68f6eec000-7f68f6eed000 rw-p 00000000 00:00 0 
+7f68f6eed000-7f68f6eef000 r--p 00000000 00:3b 109198334                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libinstrument.so
+7f68f6eef000-7f68f6ef5000 r-xp 00002000 00:3b 109198334                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libinstrument.so
+7f68f6ef5000-7f68f6ef8000 r--p 00008000 00:3b 109198334                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libinstrument.so
+7f68f6ef8000-7f68f6ef9000 r--p 0000a000 00:3b 109198334                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libinstrument.so
+7f68f6ef9000-7f68f6efa000 rw-p 0000b000 00:3b 109198334                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libinstrument.so
+7f68f6efa000-7f68f6f08000 r--p 00000000 fc:00 7868782                    /usr/lib/x86_64-linux-gnu/libm.so.6
+7f68f6f08000-7f68f6f84000 r-xp 0000e000 fc:00 7868782                    /usr/lib/x86_64-linux-gnu/libm.so.6
+7f68f6f84000-7f68f6fdf000 r--p 0008a000 fc:00 7868782                    /usr/lib/x86_64-linux-gnu/libm.so.6
+7f68f6fdf000-7f68f6fe0000 r--p 000e4000 fc:00 7868782                    /usr/lib/x86_64-linux-gnu/libm.so.6
+7f68f6fe0000-7f68f6fe1000 rw-p 000e5000 fc:00 7868782                    /usr/lib/x86_64-linux-gnu/libm.so.6
+7f68f6fe1000-7f68f6fe2000 r--p 00000000 fc:00 7868823                    /usr/lib/x86_64-linux-gnu/librt.so.1
+7f68f6fe2000-7f68f6fe3000 r-xp 00001000 fc:00 7868823                    /usr/lib/x86_64-linux-gnu/librt.so.1
+7f68f6fe3000-7f68f6fe4000 r--p 00002000 fc:00 7868823                    /usr/lib/x86_64-linux-gnu/librt.so.1
+7f68f6fe4000-7f68f6fe5000 r--p 00002000 fc:00 7868823                    /usr/lib/x86_64-linux-gnu/librt.so.1
+7f68f6fe5000-7f68f6fe6000 rw-p 00003000 fc:00 7868823                    /usr/lib/x86_64-linux-gnu/librt.so.1
+7f68f6fe6000-7f68f6fe8000 rw-p 00000000 00:00 0 
+7f68f6fe8000-7f68f6fe9000 r--p 00000000 fc:00 7868781                    /usr/lib/x86_64-linux-gnu/libdl.so.2
+7f68f6fe9000-7f68f6fea000 r-xp 00001000 fc:00 7868781                    /usr/lib/x86_64-linux-gnu/libdl.so.2
+7f68f6fea000-7f68f6feb000 r--p 00002000 fc:00 7868781                    /usr/lib/x86_64-linux-gnu/libdl.so.2
+7f68f6feb000-7f68f6fec000 r--p 00002000 fc:00 7868781                    /usr/lib/x86_64-linux-gnu/libdl.so.2
+7f68f6fec000-7f68f6fed000 rw-p 00003000 fc:00 7868781                    /usr/lib/x86_64-linux-gnu/libdl.so.2
+7f68f6fed000-7f68f6fee000 r--p 00000000 fc:00 7868821                    /usr/lib/x86_64-linux-gnu/libpthread.so.0
+7f68f6fee000-7f68f6fef000 r-xp 00001000 fc:00 7868821                    /usr/lib/x86_64-linux-gnu/libpthread.so.0
+7f68f6fef000-7f68f6ff0000 r--p 00002000 fc:00 7868821                    /usr/lib/x86_64-linux-gnu/libpthread.so.0
+7f68f6ff0000-7f68f6ff1000 r--p 00002000 fc:00 7868821                    /usr/lib/x86_64-linux-gnu/libpthread.so.0
+7f68f6ff1000-7f68f6ff2000 rw-p 00003000 fc:00 7868821                    /usr/lib/x86_64-linux-gnu/libpthread.so.0
+7f68f6ff4000-7f68f6ff5000 ---p 00000000 00:00 0 
+7f68f6ff5000-7f68f6ff6000 r--p 00000000 00:00 0 
+7f68f6ff6000-7f68f6ffa000 r--p 00000000 00:3b 109198499                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjimage.so
+7f68f6ffa000-7f68f700d000 r-xp 00004000 00:3b 109198499                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjimage.so
+7f68f700d000-7f68f7013000 r--p 00017000 00:3b 109198499                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjimage.so
+7f68f7013000-7f68f7015000 r--p 0001c000 00:3b 109198499                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjimage.so
+7f68f7015000-7f68f7016000 rw-p 0001e000 00:3b 109198499                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjimage.so
+7f68f7016000-7f68f7019000 r--p 00000000 00:3b 109198508                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjli.so
+7f68f7019000-7f68f7029000 r-xp 00003000 00:3b 109198508                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjli.so
+7f68f7029000-7f68f7030000 r--p 00013000 00:3b 109198508                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjli.so
+7f68f7030000-7f68f7031000 r--p 00019000 00:3b 109198508                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjli.so
+7f68f7031000-7f68f7032000 rw-p 0001a000 00:3b 109198508                  /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/jre/17.0.10-linux-x86_64/lib/libjli.so
+7f68f7032000-7f68f7034000 rw-p 00000000 00:00 0 
+7f68f7034000-7f68f7036000 r--p 00000000 fc:00 7868776                    /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+7f68f7036000-7f68f7060000 r-xp 00002000 fc:00 7868776                    /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+7f68f7060000-7f68f706b000 r--p 0002c000 fc:00 7868776                    /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+7f68f706b000-7f68f706c000 ---p 00000000 00:00 0 
+7f68f706c000-7f68f706e000 r--p 00037000 fc:00 7868776                    /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+7f68f706e000-7f68f7070000 rw-p 00039000 fc:00 7868776                    /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+7ffd92522000-7ffd92543000 rw-p 00000000 00:00 0                          [stack]
+7ffd925e2000-7ffd925e6000 r--p 00000000 00:00 0                          [vvar]
+7ffd925e6000-7ffd925e8000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+
+
+VM Arguments:
+jvm_args: --add-modules=ALL-SYSTEM --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/sun.nio.fs=ALL-UNNAMED -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Djava.import.generatesMetadataFilesAtProjectRoot=false -DDetectVMInstallationsJob.disabled=true -Dfile.encoding=utf8 -XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms100m -Xlog:disable -javaagent:/student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/lombok/lombok-1.18.31.jar 
+java_command: /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/server/plugins/org.eclipse.equinox.launcher_1.6.700.v20231214-2017.jar -configuration /student/wuhungma/.config/Code/User/globalStorage/redhat.java/1.28.1/config_ss_linux -data /student/wuhungma/.config/Code/User/workspaceStorage/0bebc625558a457327327db53fd95171/redhat.java/ss_ws --stdio
+java_class_path (initial): /student/wuhungma/.vscode/extensions/redhat.java-1.28.1-linux-x64/server/plugins/org.eclipse.equinox.launcher_1.6.700.v20231214-2017.jar
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+    uintx AdaptiveSizePolicyWeight                 = 90                                        {product} {command line}
+     intx CICompilerCount                          = 4                                         {product} {ergonomic}
+    uintx GCTimeRatio                              = 4                                         {product} {command line}
+   size_t InitialHeapSize                          = 104857600                                 {product} {command line}
+   size_t MaxHeapSize                              = 1073741824                                {product} {command line}
+   size_t MaxNewSize                               = 357564416                                 {product} {ergonomic}
+   size_t MinHeapDeltaBytes                        = 524288                                    {product} {ergonomic}
+   size_t MinHeapSize                              = 104857600                                 {product} {command line}
+   size_t NewSize                                  = 34603008                                  {product} {ergonomic}
+    uintx NonNMethodCodeHeapSize                   = 5839372                                {pd product} {ergonomic}
+    uintx NonProfiledCodeHeapSize                  = 122909434                              {pd product} {ergonomic}
+   size_t OldSize                                  = 70254592                                  {product} {ergonomic}
+    uintx ProfiledCodeHeapSize                     = 122909434                              {pd product} {ergonomic}
+    uintx ReservedCodeCacheSize                    = 251658240                              {pd product} {ergonomic}
+     bool SegmentedCodeCache                       = true                                      {product} {ergonomic}
+   size_t SoftMaxHeapSize                          = 1073741824                             {manageable} {ergonomic}
+     bool UseCompressedClassPointers               = true                           {product lp64_product} {ergonomic}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseParallelGC                            = true                                      {product} {command line}
+
+Logging:
+Log output configuration:
+ #0: stdout all=off uptime,level,tags
+ #1: stderr all=off uptime,level,tags
+
+Environment Variables:
+JAVA_HOME=/opt/jdk-20.0.1
+PATH=/opt/altera/11.1sp2/quartus/bin:/opt/jdk-20.0.1/bin:/opt/ghc/.ghcup/bin:/opt/firefox:/opt/altera/11.1sp2/quartus/bin:/opt/jdk-20.0.1/bin:/opt/ghc/.ghcup/bin:/opt/firefox:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+USERNAME=wuhungma
+XDG_CACHE_HOME=/virtual/.cache/wuhungma
+SHELL=/bin/bash
+DISPLAY=:1
+LANG=en_US.UTF-8
+
+Active Locale:
+LC_ALL=C
+LC_COLLATE=C
+LC_CTYPE=C
+LC_MESSAGES=C
+LC_MONETARY=C
+LC_NUMERIC=C
+LC_TIME=C
+
+Signal Handlers:
+   SIGSEGV: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+    SIGBUS: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+    SIGFPE: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+   SIGPIPE: javaSignalHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+   SIGXFSZ: javaSignalHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+    SIGILL: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+   SIGUSR2: SR_handler in libjvm.so, mask=00000000000000000000000000000000, flags=SA_RESTART|SA_SIGINFO, blocked
+    SIGHUP: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+    SIGINT: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+   SIGTERM: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+   SIGQUIT: UserHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+   SIGTRAP: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+
+
+Periodic native trim disabled
+
+
+---------------  S Y S T E M  ---------------
+
+OS:
+DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=22.04
+DISTRIB_CODENAME=jammy
+DISTRIB_DESCRIPTION="Ubuntu 22.04.4 LTS"
+uname: Linux 6.5.0-21-generic #21~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Feb  9 13:32:52 UTC 2 x86_64
+OS uptime: 0 days 2:18 hours
+libc: glibc 2.35 NPTL 2.35 
+rlimit (soft/hard): STACK 8192k/infinity , CORE 0k/infinity , NPROC 900/900 , NOFILE 1048576/1048576 , AS infinity/infinity , CPU infinity/infinity , DATA infinity/infinity , FSIZE infinity/infinity , MEMLOCK 4085912k/4085912k
+load average: 5.71 4.19 2.42
+
+/proc/meminfo:
+MemTotal:       32687296 kB
+MemFree:        23959612 kB
+MemAvailable:   28517656 kB
+Buffers:          245528 kB
+Cached:          4656892 kB
+SwapCached:            0 kB
+Active:          4775956 kB
+Inactive:        3116032 kB
+Active(anon):    3066052 kB
+Inactive(anon):    42296 kB
+Active(file):    1709904 kB
+Inactive(file):  3073736 kB
+Unevictable:       31828 kB
+Mlocked:           27756 kB
+SwapTotal:       8388604 kB
+SwapFree:        8388604 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:              1232 kB
+Writeback:             0 kB
+AnonPages:       3021752 kB
+Mapped:           971488 kB
+Shmem:            109684 kB
+KReclaimable:     241400 kB
+Slab:             446532 kB
+SReclaimable:     241400 kB
+SUnreclaim:       205132 kB
+KernelStack:       21192 kB
+PageTables:        45320 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    24732252 kB
+Committed_AS:   12210728 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:      120896 kB
+VmallocChunk:          0 kB
+Percpu:             9376 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+Unaccepted:            0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:     1023940 kB
+DirectMap2M:     5097472 kB
+DirectMap1G:    27262976 kB
+
+/sys/kernel/mm/transparent_hugepage/enabled: always [madvise] never
+/sys/kernel/mm/transparent_hugepage/defrag (defrag/compaction efforts parameter): always defer defer+madvise [madvise] never
+
+Process Memory:
+Virtual Size: 1448668K (peak: 1448668K)
+Resident Set Size: 18168K (peak: 18168K) (anon: 5632K, file: 12536K, shmem: 0K)
+Swapped out: 0K
+C-Heap outstanding allocations: 4467K, retained: 156K
+glibc malloc tunables: (default)
+
+/proc/sys/kernel/threads-max (system-wide limit on the number of threads): 253623
+/proc/sys/vm/max_map_count (maximum number of memory map areas a process may have): 65530
+/proc/sys/kernel/pid_max (system-wide limit on number of process identifiers): 4194304
+
+container (cgroup) information:
+container_type: cgroupv2
+cpu_cpuset_cpus: not supported
+cpu_memory_nodes: not supported
+active_processor_count: 8
+cpu_quota: not supported
+cpu_period: not supported
+cpu_shares: not supported
+memory_limit_in_bytes: unlimited
+memory_and_swap_limit_in_bytes: unlimited
+memory_soft_limit_in_bytes: unlimited
+memory_usage_in_bytes: 2161216 k
+memory_max_usage_in_bytes: not supported
+memory_swap_current_in_bytes: unlimited
+memory_swap_max_limit_in_bytes: unlimited
+maximum number of tasks: 38043
+current number of tasks: 232
+
+Steal ticks since vm start: 0
+Steal ticks percentage since vm start:  0.000
+
+CPU: total 8 (initial active 8) (8 cores per cpu, 1 threads per core) family 6 model 158 stepping 13 microcode 0xfa, cx8, cmov, fxsr, mmx, 3dnowpref, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, lzcnt, tsc, tscinvbit, avx, avx2, aes, erms, clmul, bmi1, bmi2, rtm, adx, fma, vzeroupper, clflush, clflushopt
+CPU Model and flags from /proc/cpuinfo:
+model name	: Intel(R) Core(TM) i7-9700 CPU @ 3.00GHz
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb invpcid_single ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp vnmi md_clear flush_l1d arch_capabilities
+
+Online cpus: 0-7
+Offline cpus: 
+BIOS frequency limitation: <Not Available>
+Frequency switch latency (ns): 0
+Available cpu frequencies: <Not Available>
+Current governor: powersave
+Core performance/turbo boost: <Not Available>
+
+Memory: 4k page, physical 32687296k(23959612k free), swap 8388604k(8388604k free)
+Page Sizes: 4k
+
+vm_info: OpenJDK 64-Bit Server VM (17.0.10+7) for linux-amd64 JRE (17.0.10+7), built on Jan 16 2024 00:00:00 by "admin" with gcc 10.3.0
+
+END.

@@ -51,7 +51,7 @@ Implement an order microservice responsible for handling customer orders.
 An order should have attributes such as id, user_id, product_id, quantity, and order_date.
 All endpoints on this service are: 
 /order Provide endpoints for order creation, retrieval, and cancellation.
-/user Provide endpoints for user functionality
+/Users Provide endpoints for Users functionality
 /product Provide endpoints for product functionality
 
 /order POST API (for A1)
@@ -62,7 +62,7 @@ All endpoints on this service are:
     "quantity": 3
 }
 
-==> if the product and the user exists and has a quantity of >= this quantity in stock, then quantity in DB is reduced
+==> if the product and the Users exists and has a quantity of >= this quantity in stock, then quantity in DB is reduced
 by this quantity and success is returned.
 
 All communication from OrderService MUST go to ISCS which will route and load balance the requests.
@@ -72,9 +72,15 @@ Note: this means that to place an order, you may have to first make a GET reques
 public class OrderService {
     public static HttpServer server;
     public static ExecutorService httpThreadPool;
-    public static String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
+    public static String password = "password";
+    public static String username = "postgres";
+    public static String host = "172.17.0.2";
+    public static String port = "5432";
+    public static String jdbcUrl = String.format("jdbc:postgresql://%s:%s/Users", host, port);
+    public static String jdbcP = String.format("jdbc:postgresql://%s:%s/Product", host, port);
+    public static String jdbcUrl2 = String.format("jdbc:postgresql://%s:%s/Orders", host, port);
+
     private static final String ISCS_ENDPOINT = "http://127.0.0.0.1/forward";
-    private static final String jdbcUrl2 = "jdbc:sqlite:src/OrderService/OrderDatabase.db";
 
     //Shutdown Signals
     public static int workRunning = 0;
@@ -167,7 +173,7 @@ public class OrderService {
                             // Check if userId exists
                             int userId = requestBody.getInt("user_id");
                             if (!doesUserIdExist(userId)) {
-                                throw new SQLException("user does not exist");
+                                throw new SQLException("Users does not exist");
                             }
                             int quantity_wanted = requestBody.getInt("quantity");
 
@@ -175,8 +181,8 @@ public class OrderService {
                                 throw new IllegalArgumentException("Invalid quantity: Quantity must be a positive integer");
                             }
 
-                            //Make sure the JSON is of correct format with user id product id and qunatity
-                            Connection connection = DriverManager.getConnection("jdbc:sqlite:src/ProductService/ProductDatabase.db");
+                            //Make sure the JSON is of correct format with Users id product id and qunatity
+                            Connection connection = DriverManager.getConnection(jdbcP, username, password);
                             String selectQuery = "SELECT * FROM Product WHERE productId = ?";
                             PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                             preparedStatement.setInt(1, productId);
@@ -207,7 +213,8 @@ public class OrderService {
                                     String jsonBody = String.format("{\"command\": \"update\", \"product_id\": %d, \"quantity\": %d}", product_id, quantity_database - quantity_wanted);
                                     // Update product database
                                     
-                                    Connection connection2 = DriverManager.getConnection(jdbcUrl2);
+                                    
+                                    Connection connection2 = DriverManager.getConnection(jdbcUrl2, username, password);
                                     System.out.println("here11111");
                                     String insertQuery = "INSERT INTO Orders (orderId, userId, productId, quantity) VALUES (?, ?, ?, ?)";
                                     try (PreparedStatement preparedStatementInsert = connection2.prepareStatement(insertQuery)) {
@@ -241,7 +248,7 @@ public class OrderService {
                             preparedStatement.close();
                             connection.close();
 
-                            // System.out.println("User ID: " + userId);
+                            // System.out.println("Users ID: " + userId);
                             // System.out.println("Product ID: " + productId);
                             // System.out.println("Quantity: " + quantity);
 
@@ -251,12 +258,12 @@ public class OrderService {
                             sendResponse(exchange, 400, responseToClient.toString());
                         }
                     } catch (SQLException e) {
-                        //Either user id or product id cannot be found
+                        //Either Users id or product id cannot be found
                         responseToClient
                             .put("status", "Invalid Request");
                         sendResponse(exchange, 404, responseToClient.toString());
                     } catch(IllegalArgumentException e) {
-                        //Either user id or product id cannot be found
+                        //Either Users id or product id cannot be found
                         responseToClient
                             .put("status", "Invalid Request");
                         sendResponse(exchange, 400, responseToClient.toString());
@@ -374,14 +381,14 @@ public class OrderService {
                     int userId = Integer.parseInt(parts[3]);  
                     JSONObject responseJson = new JSONObject();
 
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
-                        String checkUserQuery = "SELECT COUNT(*) AS count FROM User WHERE user_id = ?";
+                    try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
+                        String checkUserQuery = "SELECT COUNT(*) AS count FROM Users WHERE user_id = ?";
                         try (PreparedStatement stmt = connection.prepareStatement(checkUserQuery)) {
                             stmt.setInt(1, userId); 
                             ResultSet rs = stmt.executeQuery();
 
                             if (rs.next() && rs.getInt("count") > 0) {
-                                try (Connection connection2 = DriverManager.getConnection("jdbc:sqlite:src/OrderService/OrderDatabase.db")) {
+                                try (Connection connection2 = DriverManager.getConnection(jdbcUrl2, username, password)) {
                                     String selectQuery = "SELECT productId, SUM(quantity) as quantity FROM Orders WHERE userId = ? GROUP BY productId";
                                     try (PreparedStatement stmt2 = connection2.prepareStatement(selectQuery)) {
                                         stmt2.setInt(1, userId);
@@ -569,10 +576,14 @@ public class OrderService {
 
 
     private static boolean doesProductIdExist(int productId) throws SQLException {
-        String jdbcUrl = "jdbc:sqlite:src/ProductService/ProductDatabase.db";
+        String password = "password";
+        String username = "postgres";
+        String host = "172.17.0.2";
+        String port = "5432";
+        String url = String.format("jdbc:postgresql://%s:%s/Product", host, port);
         boolean exists = false;
     
-        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+        try (Connection connection = DriverManager.getConnection(url, username, password);
              PreparedStatement preparedStatement = connection.prepareStatement(
                  "SELECT COUNT(*) FROM Product WHERE productId = ?")) {
             
@@ -587,11 +598,16 @@ public class OrderService {
     }
 
     private static boolean doesUserIdExist(int userId) throws SQLException {
-        String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
+        String password = "password";
+        String username = "postgres";
+        String host = "172.17.0.2";
+        String port = "5432";
+        String url = String.format("jdbc:postgresql://%s:%s/Users", host, port);
+
         boolean exists = false;
-        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+        try (Connection connection = DriverManager.getConnection(url, username, password);
              PreparedStatement preparedStatement = connection.prepareStatement(
-                 "SELECT COUNT(*) FROM User WHERE user_id = ?")) {
+                 "SELECT COUNT(*) FROM Users WHERE user_id = ?")) {
             
             preparedStatement.setInt(1, userId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {

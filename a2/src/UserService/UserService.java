@@ -81,7 +81,11 @@ returns the following JSON in the response body.
 */
 
 public class UserService {
-    public static String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
+    public static String password = "password";
+    public static String username = "postgres";
+    public static String host = "172.17.0.2";
+    public static String port = "5432";
+    public static String url = String.format("jdbc:postgresql://%s:%s/Users", host, port);
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
@@ -128,7 +132,7 @@ public class UserService {
                 }
                 if (command.equals("create")) 
                 {
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(url, username, password)) {
                         /* Get values */
                         int id_int = requestbody.getInt("id");
                         String id = String.valueOf(id_int);
@@ -183,7 +187,7 @@ public class UserService {
                 else if (command.equals("update")) 
                 {
                     /*update user */
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(url, username, password)) {
                         if(requestbody.has("id")) {
 
                             int id_int = requestbody.getInt("id");
@@ -278,7 +282,7 @@ public class UserService {
                     }
                 } 
                 else if (command.equals("delete")) {
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(url, username, password)) {
                         int id_int = requestbody.getInt("id");
                         String username = requestbody.getString("username");
                         String email = requestbody.getString("email");
@@ -405,7 +409,7 @@ public class UserService {
 
         private static JSONObject createResponse(HttpExchange exchange, String command, Integer id_int) {
             if ("GET".equals(exchange.getRequestMethod())) {
-                try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                try (Connection connection = DriverManager.getConnection(url, username, password)) {
                     String selectQuery = "SELECT * FROM User WHERE user_id = ?";
                     PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                     preparedStatement.setInt(1, id_int);
@@ -446,7 +450,7 @@ public class UserService {
 
             } else if ("POST".equals(exchange.getRequestMethod())) {
                 if (!command.equals("delete")) {
-                    try  (Connection connection = DriverManager.getConnection(jdbcUrl)){
+                    try  (Connection connection = DriverManager.getConnection(url, username, password)){
                         String selectQuery = "SELECT * FROM User WHERE user_id = ?";
                         PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                         preparedStatement.setInt(1, id_int);
@@ -529,7 +533,7 @@ public class UserService {
                     System.out.println("Failed to delete the existing database.");
                 }
             }
-            try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
                 // Create the Product table in the new database
                                     
                 //Before starting server, create User database
