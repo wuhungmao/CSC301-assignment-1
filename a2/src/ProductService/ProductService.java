@@ -50,18 +50,31 @@ public class ProductService {
 
             // Extract IP address and port number
             String ipAddress = productServiceConfig.getString("ip");
-            int port = productServiceConfig.getInt("port");
+            int port1 = productServiceConfig.getInt("port1");
+            int port2 = productServiceConfig.getInt("port2");
+            int port3 = productServiceConfig.getInt("port3");
 
             /*For Http request*/
-            HttpServer ProductServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+            HttpServer ProductServer1 = HttpServer.create(new InetSocketAddress(ipAddress, port1), 0);
+            HttpServer ProductServer2 = HttpServer.create(new InetSocketAddress(ipAddress, port2), 0);
+            HttpServer ProductServer3 = HttpServer.create(new InetSocketAddress(ipAddress, port3), 0);
             // Example: Set a custom executor with a fixed-size thread pool
-            ProductServer.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
+            ProductServer1.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
+            ProductServer2.setExecutor(Executors.newFixedThreadPool(10));
+            ProductServer3.setExecutor(Executors.newFixedThreadPool(10));
             // Set up context for /test POST request
-            ProductServer.createContext("/product", new TestHandler());
+            ProductServer1.createContext("/product", new TestHandler());
+            ProductServer2.createContext("/product", new TestHandler());
+            ProductServer3.createContext("/product", new TestHandler());
 
-            ProductServer.start();
+            ProductServer1.start();
+            System.out.println("Product Server started on port " + port1);
+            ProductServer2.start();
+            System.out.println("Product Server started on port " + port2);
+            ProductServer3.start();
 
-            System.out.println("Product Server started on port " + port);
+            System.out.println("Product Server started on port " + port3);
+
         } catch (IOException e) {
             System.err.println("Error reading the configuration file: " + e.getMessage());
         } catch (Exception e) {

@@ -94,18 +94,34 @@ public class UserService {
 
             // Extract IP address and port number
             String ipAddress = userServiceConfig.getString("ip");
-            int port = userServiceConfig.getInt("port");
+            // for(int j = 0; j < size; j++){
+            //     httpServers[j].create(new InetSocketAddress(ipAddress, portNums[j]), 0);
+            // }
+            int port1 = userServiceConfig.getInt("port1");
+            int port2 = userServiceConfig.getInt("port2");
+            int port3 = userServiceConfig.getInt("port3");
 
             /*For Http request*/
-            HttpServer userServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+            HttpServer userServer1 = HttpServer.create(new InetSocketAddress(ipAddress, port1), 0);
+            HttpServer userServer2 = HttpServer.create(new InetSocketAddress(ipAddress, port2), 0);
+            HttpServer userServer3 = HttpServer.create(new InetSocketAddress(ipAddress, port3), 0);
             // Example: Set a custom executor with a fixed-size thread pool
-            userServer.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
+            userServer1.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
+            userServer2.setExecutor(Executors.newFixedThreadPool(10));
+            userServer3.setExecutor(Executors.newFixedThreadPool(10));
+
             // Set up context for /test POST request
-            userServer.createContext("/user", new TestHandler());
+            userServer1.createContext("/user", new TestHandler());
+            userServer2.createContext("/user", new TestHandler());
+            userServer3.createContext("/user", new TestHandler());
 
-            userServer.start();
+            userServer1.start();
+            System.out.println("user Server started on port " + port1);
+            userServer2.start();
+            System.out.println("user Server started on port " + port2);
+            userServer3.start();
+            System.out.println("user Server started on port " + port3);
 
-            System.out.println("user Server started on port " + port);
         } catch (IOException e) {
             System.err.println("Error reading the configuration file: " + e.getMessage());
         } catch (Exception e) {

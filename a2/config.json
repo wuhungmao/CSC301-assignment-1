@@ -1,6 +1,10 @@
 {
     "UserService": {
-        "port": 8081,
+        "port1": 8081,
+        "port2": 8083,
+        "port3": 8084,
+        "ports": [8081, 8083, 8084],
+        
         "ip": "127.0.0.1"
     }   ,
     "OrderService": {
@@ -8,7 +12,10 @@
         "ip": "127.0.0.1"
     }   ,
     "ProductService": {
-        "port": 8080,
+        "port1": 8080,
+        "port2": 8085,
+        "port3": 8086,
+        "ports": [8080, 8085, 8086],
         "ip": "127.0.0.1"
     }   ,
     "InterServiceCommunication": {
