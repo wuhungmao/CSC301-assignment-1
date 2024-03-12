@@ -81,7 +81,11 @@ returns the following JSON in the response body.
 */
 
 public class UserService {
-    public static String jdbcUrl = "jdbc:sqlite:src/UserService/UserDatabase.db";
+    public static String password = "password";
+    public static String username = "postgres";
+    public static String host = "172.17.0.2";
+    public static String port = "5432";
+    public static String url = String.format("jdbc:postgresql://172.17.0.2:5432/users", host, port);
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
@@ -144,7 +148,7 @@ public class UserService {
                 }
                 if (command.equals("create")) 
                 {
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(url, username, password)) {
                         /* Get values */
                         int id_int = requestbody.getInt("id");
                         String id = String.valueOf(id_int);
@@ -168,7 +172,7 @@ public class UserService {
                             sendResponse(exchange, statusCode, responseBody.toString());    
                         }
 
-                        String insertQuery = "INSERT INTO User (user_id, username, email, password) VALUES (?, ?, ?, ?)";
+                        String insertQuery = "INSERT INTO Users (user_id, username, email, password) VALUES (?, ?, ?, ?)";
                         PreparedStatement preparedStatement = connection.prepareStatement(insertQuery);
                         preparedStatement.setInt(1, id_int);
                         preparedStatement.setString(2, username);
@@ -184,7 +188,7 @@ public class UserService {
                         sendResponse(exchange, statusCode, responseBody.toString());
 
                         if (rowsAffected > 0) {
-                            System.out.println("User information created successfully.");
+                            System.out.println("Users information created successfully.");
                         }
                     } catch (JSONException e) {
                         int statusCode = 400;
@@ -198,14 +202,14 @@ public class UserService {
                 }
                 else if (command.equals("update")) 
                 {
-                    /*update user */
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    /*update Users */
+                    try (Connection connection = DriverManager.getConnection(url, username, password)) {
                         if(requestbody.has("id")) {
 
                             int id_int = requestbody.getInt("id");
                             
                             // Build the dynamic part of the UPDATE query based on provided attributes
-                            StringBuilder updateQueryBuilder = new StringBuilder("UPDATE User SET ");
+                            StringBuilder updateQueryBuilder = new StringBuilder("UPDATE Users SET ");
                             List<String> setClauses = new ArrayList<>();
                             
                             if (requestbody.has("username")) {
@@ -233,7 +237,7 @@ public class UserService {
                                     // Combine the set clauses
                                     updateQueryBuilder.append(String.join(", ", setClauses));
                                     
-                                    // Add the WHERE clause to identify the user by ID
+                                    // Add the WHERE clause to identify the Users by ID
                                     updateQueryBuilder.append(" WHERE user_id = ? ");
                                     
                                     System.out.println("after updatequerybuilder");
@@ -269,9 +273,9 @@ public class UserService {
                                     sendResponse(exchange, statusCode, responseBody.toString());
                                     
                                     if (rowsAffected > 0) {
-                                        System.out.println("User information updated successfully.");
+                                        System.out.println("Users information updated successfully.");
                                     } else {
-                                        System.out.println("No user found with the specified ID.");
+                                        System.out.println("No Users found with the specified ID.");
                                     }
                                 } else {
                                     //Invalid email type
@@ -281,7 +285,7 @@ public class UserService {
                                 }
                             }
                         } else {
-                            //No user id. Return 400 with empty json
+                            //No Users id. Return 400 with empty json
                             JSONObject responseBody = new JSONObject();
                             int statusCode = 400;
                             sendResponse(exchange, statusCode, responseBody.toString());
@@ -289,18 +293,19 @@ public class UserService {
                     } catch (SQLException e) {
                         int statusCode = 400;
                         System.out.println("sql exception");
+                        System.out.println(e.getMessage());
                         JSONObject responseBody = new JSONObject();
                         sendResponse(exchange, statusCode, responseBody.toString());
                     }
                 } 
                 else if (command.equals("delete")) {
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+                    try (Connection connection = DriverManager.getConnection(url, username, password)) {
                         int id_int = requestbody.getInt("id");
                         String username = requestbody.getString("username");
                         String email = requestbody.getString("email");
                         String password = requestbody.getString("password");
                 
-                        String selectQuery = "SELECT * FROM User WHERE user_id = ? AND username = ? AND email = ? AND password = ?";
+                        String selectQuery = "SELECT * FROM Users WHERE user_id = ? AND username = ? AND email = ? AND password = ?";
                         PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
                         selectStatement.setInt(1, id_int);
                         selectStatement.setString(2, username);
@@ -314,7 +319,7 @@ public class UserService {
                             resultSet.close();
                             selectStatement.close();
                 
-                            String deleteQuery = "DELETE FROM User WHERE user_id = ?";
+                            String deleteQuery = "DELETE FROM Users WHERE user_id = ?";
                             PreparedStatement deleteStatement = connection.prepareStatement(deleteQuery);
                             deleteStatement.setInt(1, id_int);
                 
@@ -325,13 +330,13 @@ public class UserService {
                             // Put in all information that needs to be sent to the client
                             JSONObject responseBody = createResponse(exchange, command, id_int);
                 
-                            int statusCode = (rowsAffected > 0) ? 200 : 404; // 404 if no user found
+                            int statusCode = (rowsAffected > 0) ? 200 : 404; // 404 if no Users found
                             sendResponse(exchange, statusCode, responseBody.toString());
                 
                             if (rowsAffected > 0) {
-                                System.out.println("User deleted successfully.");
+                                System.out.println("Users deleted successfully.");
                             } else {
-                                System.out.println("No user found with the specified ID.");
+                                System.out.println("No Users found with the specified ID.");
                             }
                         } else {
                             // Invalid credentials, send 401 Unauthorized
@@ -344,6 +349,7 @@ public class UserService {
                     } catch (SQLException e) {
                         int statusCode = 400;
                         System.out.println("sql exception");
+                        System.out.println(e.getMessage());
                         JSONObject responseBody = new JSONObject();
                         sendResponse(exchange, statusCode, responseBody.toString());
                     } catch (JSONException e) {
@@ -358,13 +364,13 @@ public class UserService {
                     responseBody.put("command", command);
                     sendResponse(exchange, 200, responseBody.toString());
 
-                    System.out.println("User Server has been shut down gracefully.");
+                    System.out.println("Users Server has been shut down gracefully.");
                     System.exit(0); // Exit the application
                 } else if (command.equals("restart")) {
                     JSONObject responseBody = new JSONObject();
                     responseBody.put("command", command);
                     sendResponse(exchange, 200, responseBody.toString());
-                    System.out.println("User Server has been restarted.");
+                    System.out.println("Users Server has been restarted.");
                 }
             }
             // Handle Get request 
@@ -374,19 +380,19 @@ public class UserService {
                     createNewDatabase();
                 }
                 try {
-                    // Extract user ID from the request URI
+                    // Extract Users ID from the request URI
                     System.out.println("in get");
 
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
                     int id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
                     System.out.println("id_int is "+ String.valueOf(id_int));
-                    // Get user information
+                    // Get Users information
                     JSONObject responseBody = createResponse(exchange, "", id_int);
             
                     int statusCode = 200;
                     sendResponse(exchange, statusCode, responseBody.toString());
                 } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-                    // Handle invalid or missing user ID in the URL
+                    // Handle invalid or missing Users ID in the URL
                     int statusCode = 400;
                     JSONObject responseBody = new JSONObject();
                     sendResponse(exchange, statusCode, responseBody.toString());
@@ -396,7 +402,7 @@ public class UserService {
         
         // Returns true if there is at least one row in the result set
         private static boolean duplicate(int id_int, Connection connection ) throws SQLException {
-            String selectQuery = "SELECT * FROM User WHERE user_id = ?";
+            String selectQuery = "SELECT * FROM Users WHERE user_id = ?";
             PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
             selectStatement.setInt(1, id_int);
             
@@ -421,19 +427,19 @@ public class UserService {
 
         private static JSONObject createResponse(HttpExchange exchange, String command, Integer id_int) {
             if ("GET".equals(exchange.getRequestMethod())) {
-                try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
-                    String selectQuery = "SELECT * FROM User WHERE user_id = ?";
+                try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                    String selectQuery = "SELECT * FROM Users WHERE user_id = ?";
                     PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                     preparedStatement.setInt(1, id_int);
 
                     ResultSet resultSet = preparedStatement.executeQuery();
                     if (resultSet.next()) {
-                        // Fetch user details from the result set
+                        // Fetch Users details from the result set
                         String Username = resultSet.getString("username");
                         String Email = resultSet.getString("email");
                         String Password = resultSet.getString("password");
 
-                        // Create a JSONObject with the fetched user details
+                        // Create a JSONObject with the fetched Users details
                         JSONObject responseBody = new JSONObject()
                                 .put("id", id_int)
                                 .put("username", Username)
@@ -446,7 +452,7 @@ public class UserService {
 
                         return responseBody;
                     } else {
-                        // User not found
+                        // Users not found
                         JSONObject responseBody = new JSONObject();
                         // Close resources
                         resultSet.close();
@@ -458,23 +464,23 @@ public class UserService {
                     e.printStackTrace();
                 }
 
-                return null; // Return null if there's an error or if the user is not found
+                return null; // Return null if there's an error or if the Users is not found
 
             } else if ("POST".equals(exchange.getRequestMethod())) {
                 if (!command.equals("delete")) {
-                    try  (Connection connection = DriverManager.getConnection(jdbcUrl)){
-                        String selectQuery = "SELECT * FROM User WHERE user_id = ?";
+                    try  (Connection connection = DriverManager.getConnection(url, username, password)){
+                        String selectQuery = "SELECT * FROM Users WHERE user_id = ?";
                         PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                         preparedStatement.setInt(1, id_int);
 
                         ResultSet resultSet = preparedStatement.executeQuery();
                         if (resultSet.next()) {
-                            // Fetch user details from the result set
+                            // Fetch Users details from the result set
                             String Username = resultSet.getString("username");
                             String Email = resultSet.getString("email");
                             String Password = resultSet.getString("password");
 
-                            // Create a JSONObject with the fetched user details
+                            // Create a JSONObject with the fetched Users details
                             JSONObject responseBody = new JSONObject()
                                     .put("id", id_int)
                                     .put("username", Username)
@@ -487,8 +493,8 @@ public class UserService {
 
                             return responseBody;
                         } else {
-                            // User not found
-                            System.out.println("No user found with the specified ID.");
+                            // Users not found
+                            System.out.println("No Users found with the specified ID.");
                         }
 
                         // Close resources
@@ -545,22 +551,22 @@ public class UserService {
                     System.out.println("Failed to delete the existing database.");
                 }
             }
-            try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
                 // Create the Product table in the new database
                                     
-                //Before starting server, create User database
-                String createTableQuery = "CREATE TABLE IF NOT EXISTS User ("
+                //Before starting server, create Users database
+                String createTableQuery = "CREATE TABLE IF NOT EXISTS Users ("
                             + "user_id INTEGER PRIMARY KEY,"
                             + "username TEXT NOT NULL,"
                             + "email TEXT NOT NULL,"
                             + "password TEXT NOT NULL)";
                 
                 try (Statement statement = connection.createStatement()) {
-                    // Execute the query to create the User table
+                    // Execute the query to create the Users table
                     statement.executeUpdate(createTableQuery);
-                    System.out.println("User table created successfully.");
+                    System.out.println("Users table created successfully.");
                 } catch (SQLException sqle) {
-                    System.out.println("Error creating User table: " + sqle.getMessage());
+                    System.out.println("Error creating Users table: " + sqle.getMessage());
                 }
             } catch (SQLException e) {
                 System.out.println("Error creating new database: " + e.getMessage());
@@ -575,4 +581,3 @@ public class UserService {
         }
     }
 }
-
