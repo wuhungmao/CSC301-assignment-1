@@ -446,7 +446,7 @@ public class UserService {
                                 .put("id", id_int)
                                 .put("username", Username)
                                 .put("email", Email)
-                                .put("password", Password);
+                                .put("password", hashPassword(Password));
 
                         // Close resources
                         resultSet.close();
