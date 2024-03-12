@@ -76,9 +76,9 @@ public class OrderService {
     public static String username = "postgres";
     public static String host = "172.17.0.2";
     public static String port = "5432";
-    public static String jdbcUrl = String.format("jdbc:postgresql://%s:%s/Users", host, port);
-    public static String jdbcP = String.format("jdbc:postgresql://%s:%s/Product", host, port);
-    public static String jdbcUrl2 = String.format("jdbc:postgresql://%s:%s/Orders", host, port);
+    public static String jdbcUrl = String.format("jdbc:postgresql://%s:%s/users", host, port);
+    public static String jdbcP = String.format("jdbc:postgresql://%s:%s/product", host, port);
+    public static String jdbcUrl2 = String.format("jdbc:postgresql://%s:%s/orders", host, port);
 
     private static final String ISCS_ENDPOINT = "http://127.0.0.0.1/forward";
 
@@ -580,7 +580,7 @@ public class OrderService {
         String username = "postgres";
         String host = "172.17.0.2";
         String port = "5432";
-        String url = String.format("jdbc:postgresql://%s:%s/Product", host, port);
+        String url = String.format("jdbc:postgresql://%s:%s/product", host, port);
         boolean exists = false;
     
         try (Connection connection = DriverManager.getConnection(url, username, password);
@@ -602,7 +602,7 @@ public class OrderService {
         String username = "postgres";
         String host = "172.17.0.2";
         String port = "5432";
-        String url = String.format("jdbc:postgresql://%s:%s/Users", host, port);
+        String url = String.format("jdbc:postgresql://%s:%s/users", host, port);
 
         boolean exists = false;
         try (Connection connection = DriverManager.getConnection(url, username, password);

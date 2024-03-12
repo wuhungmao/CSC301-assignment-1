@@ -39,7 +39,7 @@ public class ProductService {
     public static String username = "postgres";
     public static String host = "172.17.0.2";
     public static String port = "5432";
-    public static String url = String.format("jdbc:postgresql://%s:%s/Product", host, port);
+    public static String url = "jdbc:postgresql://172.17.0.2:5432/product";
     
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
