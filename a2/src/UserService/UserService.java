@@ -81,6 +81,7 @@ returns the following JSON in the response body.
 */
 
 public class UserService {
+    public static Map<String, JSONObject> cache = new HashMap<>();
     public static String password = "password";
     public static String username = "postgres";
     public static String host = "172.17.0.2";
@@ -156,6 +157,13 @@ public class UserService {
                             sendResponse(exchange, statusCode, responseBody.toString());    
                         }
 
+                        //cache
+                        JSONObject info = new JSONObject();
+                        info.put("username", username);
+                        info.put("email", email);
+                        info.put("password", password);
+                        cache.put(id, info);
+
                         String insertQuery = "INSERT INTO Users (user_id, username, email, password) VALUES (?, ?, ?, ?)";
                         PreparedStatement preparedStatement = connection.prepareStatement(insertQuery);
                         preparedStatement.setInt(1, id_int);
@@ -191,6 +199,7 @@ public class UserService {
                         if(requestbody.has("id")) {
 
                             int id_int = requestbody.getInt("id");
+                            String id = String.valueOf(id_int);//for cache
                             
                             // Build the dynamic part of the UPDATE query based on provided attributes
                             StringBuilder updateQueryBuilder = new StringBuilder("UPDATE Users SET ");
@@ -230,17 +239,21 @@ public class UserService {
                                     PreparedStatement preparedStatement = connection.prepareStatement(updateQueryBuilder.toString());
                                     
                                     System.out.println("suspected error 1");
-                                    
+
+                                    JSONObject original_info = cache.get(id);//get original jsonobject in cache for updating
                                     // Set values for each attribute
                                     int parameterIndex = 1;
                                     if (requestbody.has("username")) {
                                         preparedStatement.setString(parameterIndex++, requestbody.getString("username"));
+                                        original_info.put("username", requestbody.getString("username"));
                                     }
                                     if (requestbody.has("email")) {
                                         preparedStatement.setString(parameterIndex++, requestbody.getString("email"));
+                                        original_info.put("email", requestbody.getString("email"));
                                     }
                                     if (requestbody.has("password")) {
                                         preparedStatement.setString(parameterIndex++, requestbody.getString("password"));
+                                        original_info.put("password", requestbody.getString("password"));
                                     }
                                     
                                     // Set the user_id for the WHERE clause
@@ -257,6 +270,7 @@ public class UserService {
                                     sendResponse(exchange, statusCode, responseBody.toString());
                                     
                                     if (rowsAffected > 0) {
+                                        cache.put(id ,original_info);// update for cache
                                         System.out.println("Users information updated successfully.");
                                     } else {
                                         System.out.println("No Users found with the specified ID.");
@@ -284,6 +298,7 @@ public class UserService {
                 else if (command.equals("delete")) {
                     try (Connection connection = DriverManager.getConnection(url, username, password)) {
                         int id_int = requestbody.getInt("id");
+                        String id = String.valueOf(id_int);//for cache
                         String username = requestbody.getString("username");
                         String email = requestbody.getString("email");
                         String password = requestbody.getString("password");
@@ -317,6 +332,7 @@ public class UserService {
                             sendResponse(exchange, statusCode, responseBody.toString());
                 
                             if (rowsAffected > 0) {
+                                cache.remove(id);//delete from cache
                                 System.out.println("Users deleted successfully.");
                             } else {
                                 System.out.println("No Users found with the specified ID.");
@@ -367,12 +383,22 @@ public class UserService {
 
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
                     int id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
+                    String id = String.valueOf(id_int);//for cache
                     System.out.println("id_int is "+ String.valueOf(id_int));
                     // Get Users information
-                    JSONObject responseBody = createResponse(exchange, "", id_int);
-            
-                    int statusCode = 200;
-                    sendResponse(exchange, statusCode, responseBody.toString());
+//                    JSONObject responseBody = createResponse(exchange, "", id_int);
+//
+//                    int statusCode = 200;
+//                    sendResponse(exchange, statusCode, responseBody.toString());
+                    if (cache.containsKey(id)) {//get info directly from cache
+                        JSONObject responseBody = cache.get(id);
+                        int statusCode = 200;
+                        sendResponse(exchange, statusCode, responseBody.toString());
+                    }else{
+                        int statusCode = 400;
+                        JSONObject responseBody = new JSONObject();
+                        sendResponse(exchange, statusCode, responseBody.toString());
+                    }
                 } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
                     // Handle invalid or missing Users ID in the URL
                     int statusCode = 400;
