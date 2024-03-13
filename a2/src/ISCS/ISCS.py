@@ -1,3 +1,4 @@
+import sys # REmove later
 from flask import Flask, request, jsonify
 import requests
 import json
@@ -36,7 +37,7 @@ for i in range(len(product_api_ports)):
     product_api_endpoints.append(product_api_endpoint_format + str(product_api_ports[i]))
 userIndex = [0]
 productIndex = [0]
-# print(user_api_endpoints, product_api_endpoints)
+print(user_api_endpoints, product_api_endpoints)
 # print(1)
 
 @app.route('/product', methods=['POST'])
@@ -58,9 +59,9 @@ def product_endpoint():
     # Return a simplified response or customize as needed
     return product_service_response.json()
 
-@app.route('/product/<id:id>', methods=['GET'])
+@app.route("/product", methods=['GET'])
 def product_endpoint_get():
-    print(f"{product_api_endpoints[productIndex[0]]}/product/" + str(id))
+    print("BASE URL = " + request.base_url, file=sys.stdout)
 
     # Forward the request as received to the Product service
     product_service_response = requests.get(f"{product_api_endpoints[productIndex[0]]}/product/" + str(id))
@@ -85,7 +86,7 @@ def user_endpoint():
     # print(user_api_endpoints, product_api_endpoints)
     # Forward the request as received to the User service
     user_service_response = requests.post(f"{user_api_endpoints[userIndex[0]]}/user", json=data)
-    print(userIndex)
+    # print(userIndex)
     if userIndex[0] >= len(user_api_ports) - 1:
         userIndex[0] = 0
     else:
@@ -99,9 +100,9 @@ def user_endpoint():
     # Return a simplified response or customize as needed
     return user_service_response.json()
 
-@app.route('/user/<id:id>', methods=['GET'])
+@app.route('/user', methods=['GET'])
 def user_endpoint_get():
-    print(f"{user_api_endpoints[userIndex[0]]}/user/" + str(id))
+    print("BASE URL = " + request.base_url, file=sys.stdout)
     # Forward the request as received to the User service
     user_service_response = requests.get(f"{user_api_endpoints[userIndex[0]]}/user/" + str(id))
     if userIndex[0] >= len(user_api_ports) - 1:

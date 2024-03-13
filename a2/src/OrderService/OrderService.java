@@ -300,7 +300,7 @@ public class OrderService {
                 if ("create".equals(command) || "update".equals(command) || "delete".equals(command)) {
                     try {
                         String jsonAsString = requestBody.toString();
-                        System.out.println(ISCSURL + "/product");
+                        System.out.println(ISCSURL + "/user");
                         String response = sendPostRequest(ISCSURL + "/user", jsonAsString);
                         sendResponse(exchange, 200, "forward");
                     } catch (IOException e) {
@@ -317,8 +317,8 @@ public class OrderService {
                 try {
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
                     Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
-                    System.out.println(ISCSURL + "/" + id_int.toString());
-                    int code = forwardGetRequest(ISCSURL + "/" + id_int.toString());
+                    System.out.println(ISCSURL + "/user/" + id_int.toString());
+                    int code = forwardGetRequest(ISCSURL + "/user/" + id_int.toString());
                     
                     JSONObject responseToClient = new JSONObject();
                     responseToClient.put("status", "Invalid Request");
@@ -359,8 +359,8 @@ public class OrderService {
                     try {
                         String[] pathSegments = exchange.getRequestURI().getPath().split("/");
                         Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
-                        System.out.println(ISCSURL + "/" + id_int.toString());
-                        int code = forwardGetRequest(ISCSURL + "/" + id_int.toString());
+                        System.out.println(ISCSURL + "/product/" + id_int.toString());
+                        int code = forwardGetRequest(ISCSURL + "/product/" + id_int.toString());
                         
                         JSONObject responseToClient = new JSONObject();
                         responseToClient.put("status", "Invalid Request");
