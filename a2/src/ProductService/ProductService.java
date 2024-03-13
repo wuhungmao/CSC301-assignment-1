@@ -1,4 +1,4 @@
-package ProductService;
+package productService;
 
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
@@ -26,8 +26,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import org.sqlite.JDBC;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,15 +57,15 @@ public class ProductService {
             int port = productServiceConfig.getInt("port");
 
             /*For Http request*/
-            HttpServer ProductServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+            HttpServer productServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
             // Example: Set a custom executor with a fixed-size thread pool
-            ProductServer.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
+            productServer.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
             // Set up context for /test POST request
-            ProductServer.createContext("/product", new TestHandler());
+            productServer.createContext("/product", new TestHandler());
 
-            ProductServer.start();
+            productServer.start();
 
-            System.out.println("Product Server started on port " + port);
+            System.out.println("product Server started on port " + port);
         } catch (IOException e) {
             System.err.println("Error reading the configuration file: " + e.getMessage());
         } catch (Exception e) {
@@ -106,7 +104,7 @@ public class ProductService {
                             // Check for negative quantity or price
                             if (!(quantity_int <= 0) && !(price_double < 0) && !(productName.isEmpty()) && !(description.isEmpty()) && !(id.isEmpty())) {
                                 // Check for duplicate ID
-                                String checkDuplicateQuery = "SELECT * FROM Product WHERE productId = ?";
+                                String checkDuplicateQuery = "SELECT * FROM product WHERE productId = ?";
                                 PreparedStatement checkDuplicateStatement = connection.prepareStatement(checkDuplicateQuery);
                                 checkDuplicateStatement.setInt(1, id_int);
                                 ResultSet duplicateResultSet = checkDuplicateStatement.executeQuery();
@@ -129,7 +127,7 @@ public class ProductService {
                                 cache.put(id, info);
 
                                 // Continue with insertion
-                                String insertQuery = "INSERT INTO Product (productId, productName, description, price, quantity) VALUES (?, ?, ?, ?, ?)";
+                                String insertQuery = "INSERT INTO product (productId, productName, description, price, quantity) VALUES (?, ?, ?, ?, ?)";
                                 PreparedStatement preparedStatement = connection.prepareStatement(insertQuery);
                                 preparedStatement.setInt(1, id_int);
                                 preparedStatement.setString(2, productName);
@@ -145,7 +143,7 @@ public class ProductService {
                                 int statusCode = 200;
                                 sendResponse(exchange, statusCode, responseBody.toString());
                                 if (rowsAffected > 0) {
-                                    System.out.println("Product information created successfully.");
+                                    System.out.println("product information created successfully.");
                                 }
                             } else {
                                 //Either field is empty or some values are not valid
@@ -185,7 +183,7 @@ public class ProductService {
                             String id = String.valueOf(id_int);//for cache
                             
                             // Build the dynamic part of the UPDATE query based on provided attributes
-                            StringBuilder updateQueryBuilder = new StringBuilder("UPDATE Product SET ");
+                            StringBuilder updateQueryBuilder = new StringBuilder("UPDATE product SET ");
                             List<String> setClauses = new ArrayList<>();
                             
                             if (requestbody.has("name")) {
@@ -325,7 +323,7 @@ public class ProductService {
                         double price = requestbody.getDouble("price");
                         int quantity = requestbody.getInt("quantity");
                 
-                        String selectQuery = "SELECT * FROM Product WHERE productId = ? AND productName = ? AND price = ? AND quantity = ?";
+                        String selectQuery = "SELECT * FROM product WHERE productId = ? AND productName = ? AND price = ? AND quantity = ?";
                         PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
                         selectStatement.setInt(1, id_int);
                         selectStatement.setString(2, productName);
@@ -340,7 +338,7 @@ public class ProductService {
                             resultSet.close();
                             selectStatement.close();
                 
-                            String deleteQuery = "DELETE FROM Product WHERE productId = ?";
+                            String deleteQuery = "DELETE FROM product WHERE productId = ?";
                             PreparedStatement deleteStatement = connection.prepareStatement(deleteQuery);
                             deleteStatement.setInt(1, id_int);
                 
@@ -357,7 +355,7 @@ public class ProductService {
                                 cache.remove(id);//delete from cache
                             }
                             // if (rowsAffected > 0) {
-                            //     System.out.println("Product deleted successfully.");
+                            //     System.out.println("product deleted successfully.");
                             // } else {
                             //     System.out.println("No product found with the specified ID.");
                             // }
@@ -414,13 +412,13 @@ public class ProductService {
                     responseBody.put("command", command);
                     sendResponse(exchange, 200, responseBody.toString());
 
-                    System.out.println("Product Server has been shut down gracefully.");
+                    System.out.println("product Server has been shut down gracefully.");
                     System.exit(0); // Exit the application
                 } else if (command.equals("restart")) {
                     JSONObject responseBody = new JSONObject();
                     responseBody.put("command", command);
                     sendResponse(exchange, 200, responseBody.toString());
-                    System.out.println("Product Server has been restarted.");
+                    System.out.println("product Server has been restarted.");
                 }
             }
             // Handle Get request 
@@ -435,7 +433,7 @@ public class ProductService {
                     int id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
                     String id = String.valueOf(id_int);//for cache
 
-                    String selectQuery = "SELECT * FROM Product WHERE productId = ?";
+                    String selectQuery = "SELECT * FROM product WHERE productId = ?";
                     PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
                     selectStatement.setInt(1, id_int);
             
@@ -489,7 +487,7 @@ public class ProductService {
         private static JSONObject createResponse(HttpExchange exchange, String command, Integer id_int) {
             if ("GET".equals(exchange.getRequestMethod())) {
                 try (Connection connection = DriverManager.getConnection(url, username, password)) {    
-                    String selectQuery = "SELECT * FROM Product WHERE productId = ?";
+                    String selectQuery = "SELECT * FROM product WHERE productId = ?";
                     PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                     preparedStatement.setInt(1, id_int);
 
@@ -532,7 +530,7 @@ public class ProductService {
             } else if ("POST".equals(exchange.getRequestMethod())) {
                 if (!command.equals("delete")) {
                     try (Connection connection = DriverManager.getConnection(url, username, password)) {
-                        String selectQuery = "SELECT * FROM Product WHERE productId = ?";
+                        String selectQuery = "SELECT * FROM product WHERE productId = ?";
                         PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                         preparedStatement.setInt(1, id_int);
             
@@ -558,7 +556,7 @@ public class ProductService {
             
                             return responseBody;
                         } else {
-                            // Product not found
+                            // product not found
                             System.out.println("No product found with the specified ID.");
                         }
             
@@ -605,7 +603,7 @@ public class ProductService {
         }
         
         private static void createNewDatabase() {
-            File databaseFile = new File("db/ProductDatabase.db");
+            File databaseFile = new File("db/productDatabase.db");
         
             // Check if the database file exists
             if (databaseFile.exists()) {
@@ -617,19 +615,19 @@ public class ProductService {
                 }
             }
             try (Connection connection = DriverManager.getConnection(url, username, password)) {
-                // Create the Product table in the new database
-                String createTableQuery = "CREATE TABLE IF NOT EXISTS Product ("
+                // Create the product table in the new database
+                String createTableQuery = "CREATE TABLE IF NOT EXISTS product ("
                         + "productId INTEGER PRIMARY KEY,"
                         + "productName TEXT NOT NULL,"
                         + "description TEXT NOT NULL,"
                         + "price DOUBLE NOT NULL,"
                         + "quantity INTEGER NOT NULL)";
                 try (Statement statement = connection.createStatement()) {
-                    // Execute the query to create the Product table
+                    // Execute the query to create the product table
                     statement.executeUpdate(createTableQuery);
-                    System.out.println("Product table created successfully in a new database.");
+                    System.out.println("product table created successfully in a new database.");
                 } catch (SQLException sqle) {
-                    System.out.println("Error creating Product table: " + sqle.getMessage());
+                    System.out.println("Error creating product table: " + sqle.getMessage());
                 }
         
             } catch (SQLException e) {
