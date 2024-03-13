@@ -1,4 +1,4 @@
-package productService;
+package ProductService;
 
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
@@ -26,6 +26,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.sqlite.JDBC;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,13 +59,13 @@ public class ProductService {
             int port = productServiceConfig.getInt("port");
 
             /*For Http request*/
-            HttpServer productServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+            HttpServer ProductServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
             // Example: Set a custom executor with a fixed-size thread pool
-            productServer.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
+            ProductServer.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
             // Set up context for /test POST request
-            productServer.createContext("/product", new TestHandler());
+            ProductServer.createContext("/product", new TestHandler());
 
-            productServer.start();
+            ProductServer.start();
 
             System.out.println("product Server started on port " + port);
         } catch (IOException e) {
@@ -266,7 +268,7 @@ public class ProductService {
                             
                             if (rowsAffected > 0) {
                                 cache.put(id ,original_info);
-                                System.out.println("Product information updated successfully.");
+                                System.out.println("product information updated successfully.");
                             } 
                         } else {
                             // if(requestbody.has("id")) {
@@ -603,7 +605,7 @@ public class ProductService {
         }
         
         private static void createNewDatabase() {
-            File databaseFile = new File("db/productDatabase.db");
+            File databaseFile = new File("db/ProductDatabase.db");
         
             // Check if the database file exists
             if (databaseFile.exists()) {
