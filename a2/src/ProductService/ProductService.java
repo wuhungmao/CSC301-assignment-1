@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class productService {
+public class ProductService {
     public static String password = "password";
     public static String username = "postgres";
     public static String host = "172.17.0.2";
