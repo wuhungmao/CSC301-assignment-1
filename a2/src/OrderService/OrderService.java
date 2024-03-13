@@ -218,14 +218,19 @@ public class OrderService {
                                     System.out.println("here11111");
                                     String insertQuery = "INSERT INTO orders (orderId, userId, productId, quantity) VALUES (?, ?, ?, ?)";
                                     try (PreparedStatement preparedStatementInsert = connection2.prepareStatement(insertQuery)) {
-                                        System.out.println("here1111");
                                         preparedStatementInsert.setInt(2, userId);
-                                        System.out.println("here111");
                                         preparedStatementInsert.setInt(3, productId);
-                                        System.out.println("here11");
                                         preparedStatementInsert.setInt(4, quantity_wanted);
-                                        System.out.println("here1");
                                         preparedStatementInsert.executeUpdate();
+                                    } catch(SQLException e){
+                                        String response = sendPostRequest(ISCSURL + "/product", jsonBody);
+                                        if (quantity_database < quantity_wanted) {
+                                            // System.out.println("flag2");
+                                            responseToClient
+                                                    .put("status", "Exceeded quantity limit");
+                                            sendResponse(exchange, 400, responseToClient.toString());
+                                        }
+                                        System.out.println("ERROR");
                                     }
                                     try {
                                         String response = sendPostRequest(ISCSURL + "/product", jsonBody);
