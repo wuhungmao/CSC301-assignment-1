@@ -51,7 +51,7 @@ Implement an order microservice responsible for handling customer orders.
 An order should have attributes such as id, user_id, product_id, quantity, and order_date.
 All endpoints on this service are: 
 /order Provide endpoints for order creation, retrieval, and cancellation.
-/Users Provide endpoints for Users functionality
+/users Provide endpoints for users functionality
 /product Provide endpoints for product functionality
 
 /order POST API (for A1)
@@ -62,7 +62,7 @@ All endpoints on this service are:
     "quantity": 3
 }
 
-==> if the product and the Users exists and has a quantity of >= this quantity in stock, then quantity in DB is reduced
+==> if the product and the users exists and has a quantity of >= this quantity in stock, then quantity in DB is reduced
 by this quantity and success is returned.
 
 All communication from OrderService MUST go to ISCS which will route and load balance the requests.
@@ -173,7 +173,7 @@ public class OrderService {
                             // Check if userId exists
                             int userId = requestBody.getInt("user_id");
                             if (!doesUserIdExist(userId)) {
-                                throw new SQLException("Users does not exist");
+                                throw new SQLException("users does not exist");
                             }
                             int quantity_wanted = requestBody.getInt("quantity");
 
@@ -181,9 +181,9 @@ public class OrderService {
                                 throw new IllegalArgumentException("Invalid quantity: Quantity must be a positive integer");
                             }
 
-                            //Make sure the JSON is of correct format with Users id product id and qunatity
+                            //Make sure the JSON is of correct format with users id product id and qunatity
                             Connection connection = DriverManager.getConnection(jdbcP, username, password);
-                            String selectQuery = "SELECT * FROM Product WHERE productId = ?";
+                            String selectQuery = "SELECT * FROM product WHERE productId = ?";
                             PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                             preparedStatement.setInt(1, productId);
 
@@ -216,7 +216,7 @@ public class OrderService {
                                     
                                     Connection connection2 = DriverManager.getConnection(jdbcUrl2, username, password);
                                     System.out.println("here11111");
-                                    String insertQuery = "INSERT INTO Orders (orderId, userId, productId, quantity) VALUES (?, ?, ?, ?)";
+                                    String insertQuery = "INSERT INTO orders (orderId, userId, productId, quantity) VALUES (?, ?, ?, ?)";
                                     try (PreparedStatement preparedStatementInsert = connection2.prepareStatement(insertQuery)) {
                                         System.out.println("here1111");
                                         preparedStatementInsert.setInt(2, userId);
@@ -248,7 +248,7 @@ public class OrderService {
                             preparedStatement.close();
                             connection.close();
 
-                            // System.out.println("Users ID: " + userId);
+                            // System.out.println("users ID: " + userId);
                             // System.out.println("Product ID: " + productId);
                             // System.out.println("Quantity: " + quantity);
 
@@ -258,12 +258,12 @@ public class OrderService {
                             sendResponse(exchange, 400, responseToClient.toString());
                         }
                     } catch (SQLException e) {
-                        //Either Users id or product id cannot be found
+                        //Either users id or product id cannot be found
                         responseToClient
                             .put("status", "Invalid Request");
                         sendResponse(exchange, 404, responseToClient.toString());
                     } catch(IllegalArgumentException e) {
-                        //Either Users id or product id cannot be found
+                        //Either users id or product id cannot be found
                         responseToClient
                             .put("status", "Invalid Request");
                         sendResponse(exchange, 400, responseToClient.toString());
@@ -382,14 +382,14 @@ public class OrderService {
                     JSONObject responseJson = new JSONObject();
 
                     try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
-                        String checkUserQuery = "SELECT COUNT(*) AS count FROM Users WHERE user_id = ?";
+                        String checkUserQuery = "SELECT COUNT(*) AS count FROM users WHERE user_id = ?";
                         try (PreparedStatement stmt = connection.prepareStatement(checkUserQuery)) {
                             stmt.setInt(1, userId); 
                             ResultSet rs = stmt.executeQuery();
 
                             if (rs.next() && rs.getInt("count") > 0) {
                                 try (Connection connection2 = DriverManager.getConnection(jdbcUrl2, username, password)) {
-                                    String selectQuery = "SELECT productId, SUM(quantity) as quantity FROM Orders WHERE userId = ? GROUP BY productId";
+                                    String selectQuery = "SELECT productId, SUM(quantity) as quantity FROM orders WHERE userId = ? GROUP BY productId";
                                     try (PreparedStatement stmt2 = connection2.prepareStatement(selectQuery)) {
                                         stmt2.setInt(1, userId);
                                         ResultSet rs2 = stmt2.executeQuery();
@@ -459,7 +459,7 @@ public class OrderService {
 
         try (Connection connection = DriverManager.getConnection(jdbcUrl2)) {
             // Create Purchases table
-            String createPurchasesTableQuery = "CREATE TABLE IF NOT EXISTS Orders ("
+            String createPurchasesTableQuery = "CREATE TABLE IF NOT EXISTS orders ("
                     + "orderId INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + "userId INTEGER NOT NULL,"
                     + "productId INTEGER NOT NULL,"
@@ -607,7 +607,7 @@ public class OrderService {
         boolean exists = false;
         try (Connection connection = DriverManager.getConnection(url, username, password);
              PreparedStatement preparedStatement = connection.prepareStatement(
-                 "SELECT COUNT(*) FROM Users WHERE user_id = ?")) {
+                 "SELECT COUNT(*) FROM users WHERE user_id = ?")) {
             
             preparedStatement.setInt(1, userId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
