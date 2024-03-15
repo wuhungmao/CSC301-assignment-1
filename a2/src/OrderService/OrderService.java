@@ -91,27 +91,17 @@ public class OrderService {
 
             JSONObject config = new JSONObject(configContent);
             JSONObject orderServiceConfig = config.getJSONObject("OrderService");
-            
-            JSONObject productServiceConfig = config.getJSONObject("ProductService");
-            String productServiceIP = productServiceConfig.getString("ip"); 
-            Integer productPort = productServiceConfig.getInt("port"); 
 
             JSONObject ISCSconfig = config.getJSONObject("InterServiceCommunication");
             String ISCSip = ISCSconfig.getString("ip"); 
             Integer ISCSport = ISCSconfig.getInt("port"); 
 
-            JSONObject userServiceConfig = config.getJSONObject("UserService");
-            String userServiceIP = userServiceConfig.getString("ip"); 
-            Integer userPort = userServiceConfig.getInt("port"); 
-
-            productURL = "http://" + productServiceIP + ":" + productPort + "/product";
-            userURL = "http://" + userServiceIP + ":" + userPort + "/user";
             ISCSURL = "http://" + ISCSip + ":" + ISCSport;
             
             //Change these ports later
-            usersDataSource = createDataSource("jdbc:postgresql://127.0.0.1:5432/users");
-            productsDataSource = createDataSource("jdbc:postgresql://127.0.0.1:5432/product");
-            ordersDataSource = createDataSource("jdbc:postgresql://127.0.0.1:5432/orders");
+            usersDataSource = createDataSource("jdbc:postgresql://172.17.0.2:5432/users");
+            productsDataSource = createDataSource("jdbc:postgresql://172.17.0.2:5432/product");
+            ordersDataSource = createDataSource("jdbc:postgresql://172.17.0.2:5432/orders");
 
             // Extract IP address and port
             String ipAddress = orderServiceConfig.getString("ip");
@@ -131,8 +121,6 @@ public class OrderService {
             server.createContext("/user/purchased", newHandler3);
             server.createContext("/product", newHandler4);
             server.start();
-            System.out.println("OrderService IP Address: " + ipAddress);
-            System.out.println("OrderService Port: " + port);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -186,20 +174,20 @@ public class OrderService {
                                 String name = resultSet.getString("productname");
                                 String description = resultSet.getString("description");
                                 Integer quantity_database = resultSet.getInt("quantity");
-                                System.out.println("quantity is " + (quantity_database));
+                                
                                 orderId += 1;
 
                                 // Return 409 if the amount inside database is less than quantity asked
                                 if (quantity_database < quantity_wanted) {
-                                    // System.out.println("flag2");
+                                    // //"flag2");
                                     responseToClient
                                             .put("status", "Exceeded quantity limit");
                                     sendResponse(exchange, 400, responseToClient.toString());
                                 } else {
 
                                     //Create a post request to product server so that it can decrease number of product in database by quantity
-                                    System.out.println("product_id is " + product_id);
-                                    System.out.println("quantity is " + (quantity_database - quantity_wanted));
+                                    //"product_id is " + product_id);
+                                    //"quantity is " + (quantity_database - quantity_wanted));
 
                                     Integer newQuant = quantity_database - quantity_wanted;
                                     String jsonBody = String.format("{\"command\": \"update\", \"id\": %d, \"quantity\": %d, \"name\": \"%s\", \"price\": %.2f, \"description\": \"%s\"}", product_id, newQuant, name, price, description);
@@ -216,17 +204,17 @@ public class OrderService {
                                         preparedStatementInsert.setInt(4, quantity_wanted);
                                         preparedStatementInsert.executeUpdate();
                                     } catch(SQLException e){
-                                        System.out.println("ERROR");
+                                        //"ERROR");
                                     }
                                     try {
-                                        System.out.println("Skip, fix this later");
+                                        //"Skip, fix this later");
                                         //String response = sendPostRequest(ISCSURL + "/product", jsonBody);
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
                                     */
 
-                                    System.out.println("after creating product request");
+                                    //"after creating product request");
                                     responseToClient
                                             // .put("id", orderId)
                                             .put("product_id", product_id)
@@ -241,9 +229,9 @@ public class OrderService {
                             preparedStatement.close();
                             connection.close();
 
-                            // System.out.println("users ID: " + userId);
-                            // System.out.println("Product ID: " + productId);
-                            // System.out.println("Quantity: " + quantity);
+                            // //"users ID: " + userId);
+                            // //"Product ID: " + productId);
+                            // //"Quantity: " + quantity);
 
                         } else {
                             responseToClient
@@ -278,7 +266,7 @@ public class OrderService {
                 responseBody.put("command", command);
                 sendResponse(exchange, 200, responseBody.toString());
 
-                System.out.println("Product Server has been shut down gracefully.");
+                //"Product Server has been shut down gracefully.");
                 shutdownServer();
             }
         }
@@ -509,7 +497,7 @@ public class OrderService {
             try{
                 Thread.sleep(1000);
             }catch(InterruptedException e){
-                System.out.println("wait");
+                //"wait");
             }
             timeout--;
         }
@@ -527,7 +515,7 @@ public class OrderService {
             ordersDataSource.close();
         }
 
-        System.out.println("Server shut down.");
+        //"Server shut down.");
         System.exit(0); // Exit the application
     }
 

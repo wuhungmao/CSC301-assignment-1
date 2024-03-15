@@ -59,8 +59,7 @@ public class ProductService {
             int port = productServiceConfig.getInt("port");
 
             HikariConfig configData = new HikariConfig();
-            //public static String url = "jdbc:postgresql://172.17.0.2:5432/users";
-            configData.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/product");
+            configData.setJdbcUrl("jdbc:postgresql://172.17.0.2:5432/product");
             configData.setUsername("postgres");
             configData.setPassword("password");
             configData.setMaximumPoolSize(100); 
@@ -77,7 +76,7 @@ public class ProductService {
 
             ProductServer.start();
 
-            System.out.println("product Server started on port " + port);
+            //"product Server started on port " + port);
         } catch (IOException e) {
             System.err.println("Error reading the configuration file: " + e.getMessage());
         } catch (Exception e) {
@@ -89,12 +88,12 @@ public class ProductService {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             requestCount++;
-            System.out.println("product service catch the request");
+            //"product service catch the request");
             if ("POST".equals(exchange.getRequestMethod())) {
                 JSONObject requestbody = getRequestBody(exchange);
                 String command = requestbody.getString("command");
                 if (requestCount == 1 && !command.equals("restart")) {
-                    System.out.println("Creating new database");
+                    //"Creating new database");
                     createNewDatabase();
                 }
                 if (command.equals("create")) {
@@ -137,7 +136,7 @@ public class ProductService {
                                 info.put("price", price_double);
                                 info.put("quantity", quantity);
                                 cache.put(id, info);
-                                System.out.println("update");
+                                //"update");
 
                                 // Continue with insertion
                                 String insertQuery = "INSERT INTO product (productId, productName, description, price, quantity) VALUES (?, ?, ?, ?, ?)";
@@ -156,7 +155,7 @@ public class ProductService {
                                 int statusCode = 200;
                                 sendResponse(exchange, statusCode, responseBody.toString());
                                 if (rowsAffected > 0) {
-                                    System.out.println("product information created successfully.");
+                                    //"product information created successfully.");
                                 }
                             } else {
                                 //Either field is empty or some values are not valid
@@ -172,12 +171,12 @@ public class ProductService {
                             sendResponse(exchange, statusCode, responseBody.toString());
                         }
                     } catch (SQLException e) {
-                        System.out.println("You screw up at post create");
+                        //"You screw up at post create");
                         JSONObject responseBody = new JSONObject();
                         int statusCode = 400;
                         sendResponse(exchange, statusCode, responseBody.toString());
                     } catch (JSONException e) {
-                        System.out.println("Status code 400 in post create");
+                        //"Status code 400 in post create");
                         JSONObject responseBody = new JSONObject();
                         int statusCode = 400;
                         sendResponse(exchange, statusCode, responseBody.toString());
@@ -188,7 +187,7 @@ public class ProductService {
                     }
                 } else if (command.equals("update")) {
                     /* update product */
-                    System.out.println("got the request in update");
+                    //"got the request in update");
                     try (Connection connection = dataSource.getConnection()) {
                         if(requestbody.has("id")) {
                             // Get body parameters
@@ -287,18 +286,18 @@ public class ProductService {
                             
                             if (rowsAffected > 0) {
                                 cache.put(id ,original_info);
-                                System.out.println("product information updated successfully.");
+                                //"product information updated successfully.");
                             } 
                         } else {
                             // if(requestbody.has("id")) {
                             //     // Get body parameters
                             //     int id_int = requestbody.getInt("id");
-                            //     System.out.println("id is " + id_int);
+                            //     //"id is " + id_int);
                             // }
-                            // System.out.println("missing id field exception");
+                            // //"missing id field exception");
 
                             //Missing id field
-                            System.out.println("missing updated successfully.");
+                            //"missing updated successfully.");
                             JSONObject responseBody = new JSONObject();
                             // Put in all information that needs to be sent to the client
                             int statusCode = 400; 
@@ -309,10 +308,10 @@ public class ProductService {
                         // if(requestbody.has("id")) {
                             // Get body parameters
                             // int id_int = requestbody.getInt("id");
-                            // System.out.println("id is " + id_int);
+                            // //"id is " + id_int);
                         // }
-                        // System.out.println("sql exception");
-                        System.out.println("missing updated successfully.");
+                        // //"sql exception");
+                        //"missing updated successfully.");
                         JSONObject responseBody = new JSONObject();
                         int statusCode = 400;
                         sendResponse(exchange, statusCode, responseBody.toString());
@@ -321,10 +320,10 @@ public class ProductService {
                         // if(requestbody.has("id")) {
                             // Get body parameters
                             // int id_int = requestbody.getInt("id");
-                            // System.out.println("id is " + id_int);
+                            // //"id is " + id_int);
                         // }
-                        // System.out.println("illegal argument exception");
-                        // System.out.println(e.getMessage());
+                        // //"illegal argument exception");
+                        // //e.getMessage());
                         JSONObject responseBody = new JSONObject();
                         int statusCode = 400;
                         sendResponse(exchange, statusCode, responseBody.toString());
@@ -378,9 +377,9 @@ public class ProductService {
                                 cache.remove(id);//delete from cache
                             }
                             // if (rowsAffected > 0) {
-                            //     System.out.println("product deleted successfully.");
+                            //     //"product deleted successfully.");
                             // } else {
-                            //     System.out.println("No product found with the specified ID.");
+                            //     //"No product found with the specified ID.");
                             // }
                         } else {
                             // Invalid credentials, send 401 Unauthorized
@@ -400,8 +399,8 @@ public class ProductService {
                             // int id_int = requestbody.getInt("id");
                             Object id = requestbody.get("id");
                             if(!(id instanceof Integer) || (int) id <= 0){
-                                System.out.println("id is " + id);
-                                System.out.println("sql exception");
+                                //"id is " + id);
+                                //"sql exception");
                             }
                         }
                     } catch (JSONException e) {
@@ -412,8 +411,8 @@ public class ProductService {
                             // int id_int = requestbody.getInt("id");
                             Object id = requestbody.get("id");
                             if(!(id instanceof Integer) || (int) id <= 0){
-                                System.out.println("id is " + id);
-                                System.out.println("json exception");
+                                //"id is " + id);
+                                //"json exception");
                             }
                         }
                     } catch (IllegalArgumentException e) {
@@ -424,8 +423,8 @@ public class ProductService {
                             // int id_int = requestbody.getInt("id");
                             Object id = requestbody.get("id");
                             if(!(id instanceof Integer) || (int) id <= 0){
-                                System.out.println("id is " + id);
-                                System.out.println("illegal argument exception");
+                                //"id is " + id);
+                                //"illegal argument exception");
                             }
                         }
                     }
@@ -435,19 +434,19 @@ public class ProductService {
                     responseBody.put("command", command);
                     sendResponse(exchange, 200, responseBody.toString());
 
-                    System.out.println("product Server has been shut down gracefully.");
+                    //"product Server has been shut down gracefully.");
                     System.exit(0); // Exit the application
                 } else if (command.equals("restart")) {
                     JSONObject responseBody = new JSONObject();
                     responseBody.put("command", command);
                     sendResponse(exchange, 200, responseBody.toString());
-                    System.out.println("product Server has been restarted.");
+                    //"product Server has been restarted.");
                 }
             }
             // Handle Get request 
             else if("GET".equals(exchange.getRequestMethod())){
                 if (requestCount == 1) {
-                    System.out.println("Creating new database");
+                    //"Creating new database");
                     createNewDatabase();
                 }
                 try (Connection connection = dataSource.getConnection()){
@@ -480,7 +479,7 @@ public class ProductService {
                         sendResponse(exchange, statusCode, responseBody.toString());
                     }
                 } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-                    System.out.println("status code 400 at get");
+                    //"status code 400 at get");
                     // Handle invalid or missing product ID in the URL
                     JSONObject responseBody = new JSONObject();
                     int statusCode = 400;
@@ -537,7 +536,7 @@ public class ProductService {
                         return responseBody;
                     } else {
                         // User not found
-                        System.out.println("No user found with the specified ID.");
+                        //"No user found with the specified ID.");
                     }
 
                     // Close resources
@@ -545,7 +544,7 @@ public class ProductService {
                     preparedStatement.close();
 
                 } catch (SQLException e) {
-                    System.out.println("screw up with get method in create response");
+                    //"screw up with get method in create response");
                     // e.printStackTrace();
                 }
                 return null; // Return null if there's an error or if the user is not found
@@ -580,7 +579,7 @@ public class ProductService {
                             return responseBody;
                         } else {
                             // product not found
-                            System.out.println("No product found with the specified ID.");
+                            //"No product found with the specified ID.");
                         }
             
                         // Close resources
@@ -588,7 +587,7 @@ public class ProductService {
                         preparedStatement.close();
             
                     } catch (SQLException e) {
-                        System.out.println("screw up at create response post method with create/update");
+                        //"screw up at create response post method with create/update");
                         // e.printStackTrace();
                     }
                 } else {
@@ -632,9 +631,9 @@ public class ProductService {
             if (databaseFile.exists()) {
                 // Delete the existing database file
                 if (databaseFile.delete()) {
-                    System.out.println("Existing database deleted successfully.");
+                    //"Existing database deleted successfully.");
                 } else {
-                    System.out.println("Failed to delete the existing database.");
+                    //"Failed to delete the existing database.");
                 }
             }
             try (Connection connection = dataSource.getConnection()) {
@@ -648,13 +647,13 @@ public class ProductService {
                 try (Statement statement = connection.createStatement()) {
                     // Execute the query to create the product table
                     statement.executeUpdate(createTableQuery);
-                    System.out.println("product table created successfully in a new database.");
+                    //"product table created successfully in a new database.");
                 } catch (SQLException sqle) {
-                    System.out.println("Error creating product table: " + sqle.getMessage());
+                    //"Error creating product table: " + sqle.getMessage());
                 }
         
             } catch (SQLException e) {
-                System.out.println("Error creating new database: " + e.getMessage());
+                //"Error creating new database: " + e.getMessage());
             }
         }
         
