@@ -20,12 +20,24 @@ iscs_port = config_data['InterServiceCommunication']['port']
 user_service_url = f"http://{config_data['UserService']['ip']}:{config_data['UserService']['port']}"
 product_service_url = f"http://{config_data['ProductService']['ip']}:{config_data['ProductService']['port']}"
 
+@app.route('/product/<int:product_id>', methods=['GET'])
+def get_product(product_id):
+    # Forward the GET request to the Product service
+    product_service_response = requests.get(f"{product_service_url}/product/{product_id}")
+
+    if product_service_response.status_code != 200:
+        return jsonify(product_service_response.json()), product_service_response.status_code
+
+    # Return the response from the Product service
+    return jsonify(product_service_response.json())
+
 @app.route('/product', methods=['POST'])
 def product_endpoint():
     data = request.json
 
     # Forward the request as received to the Product service
-    product_service_response = requests.post(f"{product_service_url}", json=data)
+    product_service_response = requests.post(f"{product_service_url}/product", json=data)
+    print(product_service_response)
 
     if product_service_response.status_code != 200:
         return jsonify(product_service_response.json()), product_service_response.status_code
@@ -33,12 +45,24 @@ def product_endpoint():
     # Return a simplified response or customize as needed
     return product_service_response.json()
 
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    # Forward the GET request to the User service
+    user_service_response = requests.get(f"{user_service_url}/user/{user_id}")
+
+    if user_service_response.status_code != 200:
+        return jsonify(user_service_response.json()), user_service_response.status_code
+
+    # Return the response from the User service
+    return jsonify(user_service_response.json())
+
 @app.route('/user', methods=['POST'])
 def user_endpoint():
     data = request.json
 
     # Forward the request as received to the User service
-    user_service_response = requests.post(f"{user_service_url}", json=data)
+    user_service_response = requests.post(f"{user_service_url}/user", json=data)
+    print(user_service_response)
 
     if user_service_response.status_code != 200:
         return jsonify(user_service_response.json()), user_service_response.status_code
@@ -47,4 +71,4 @@ def user_endpoint():
     return user_service_response.json()
 
 if __name__ == '__main__':
-    app.run(host=iscs_host, port=iscs_port)
+    app.run(host=iscs_host, debug=True, port=iscs_port, threaded=True, use_reloader=False)

@@ -74,7 +74,9 @@ public class OrderService {
     public static ExecutorService httpThreadPool;
     public static String password = "password";
     public static String username = "postgres";
-    public static String host = "172.17.0.2";
+    //public static String host = "172.17.0.2";
+    //DELETE THIS AFTER
+    public static String host = "localhost";
     public static String port = "5432";
     public static String jdbcUrl = String.format("jdbc:postgresql://%s:%s/users", host, port);
     public static String jdbcP = String.format("jdbc:postgresql://%s:%s/product", host, port);
@@ -114,7 +116,7 @@ public class OrderService {
 
             productURL = "http://" + productServiceIP + ":" + productPort + "/product";
             userURL = "http://" + userServiceIP + ":" + userPort + "/user";
-            ISCSURL = "http://" + ISCSip + ":" + ISCSport + "/user";
+            ISCSURL = "http://" + ISCSip + ":" + ISCSport;
 
 
             //System.out.println(productURL);
@@ -156,8 +158,6 @@ public class OrderService {
             String command = requestBody.getString("command");
             if ("POST".equals((exchange.getRequestMethod()))) {
                 if (requestCount == 1 && !command.equals("restart")) {
-                    System.out.println("Creating new database");
-                    createNewDatabase();
                 }
                 if ("place order".equals(command) == true) {
                     JSONObject responseToClient = new JSONObject();
@@ -190,11 +190,8 @@ public class OrderService {
                             ResultSet resultSet = preparedStatement.executeQuery();
 
                             if (resultSet.next()) {
-                                System.out.println("test1");
                                 int product_id = resultSet.getInt("productId");
-                                System.out.println("test2");
                                 Integer quantity_database = resultSet.getInt("quantity");
-                                System.out.println("test5");
                                 orderId += 1;
 
                                 // Return 409 if the amount inside database is less than quantity asked
@@ -204,7 +201,6 @@ public class OrderService {
                                             .put("status", "Exceeded quantity limit");
                                     sendResponse(exchange, 400, responseToClient.toString());
                                 } else {
-                                    System.out.println("before creating product request");
 
                                     //Create a post request to product server so that it can decrease number of product in database by quantity
                                     System.out.println("product_id is " + product_id);
@@ -215,7 +211,6 @@ public class OrderService {
                                     
                                     
                                     Connection connection2 = DriverManager.getConnection(jdbcUrl2, username, password);
-                                    System.out.println("here11111");
                                     String insertQuery = "INSERT INTO orders (orderId, userId, productId, quantity) VALUES (?, ?, ?, ?)";
                                     try (PreparedStatement preparedStatementInsert = connection2.prepareStatement(insertQuery)) {
                                         preparedStatementInsert.setInt(2, userId);
@@ -223,20 +218,14 @@ public class OrderService {
                                         preparedStatementInsert.setInt(4, quantity_wanted);
                                         preparedStatementInsert.executeUpdate();
                                     } catch(SQLException e){
-                                        String response = sendPostRequest(ISCSURL + "/product", jsonBody);
-                                        if (quantity_database < quantity_wanted) {
-                                            // System.out.println("flag2");
-                                            responseToClient
-                                                    .put("status", "Exceeded quantity limit");
-                                            sendResponse(exchange, 400, responseToClient.toString());
-                                        }
                                         System.out.println("ERROR");
                                     }
-                                    try {
-                                        String response = sendPostRequest(ISCSURL + "/product", jsonBody);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
+                                    //try {
+                                        System.out.println("Skip, fix this later");
+                                        //String response = sendPostRequest(ISCSURL + "/product", jsonBody);
+                                    //} catch (IOException e) {
+                                    //    e.printStackTrace();
+                                    //}
 
                                     System.out.println("after creating product request");
                                     responseToClient
@@ -318,19 +307,36 @@ public class OrderService {
                     sendResponse(exchange, 400, responseToClient.toString());
                 }
             } else {
-                try {
-                    String[] pathSegments = exchange.getRequestURI().getPath().split("/");
-                    Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
-                    int code = forwardGetRequest(userURL + "/" + id_int.toString());
-                    
-                    JSONObject responseToClient = new JSONObject();
-                    responseToClient.put("status", "Invalid Request");
+                String path = exchange.getRequestURI().getPath();
+                String[] pathSegments = path.split("/");
 
-                    sendResponse(exchange, code, "Success");
-                } catch (IOException | InterruptedException e) {
-                    JSONObject responseToClient = new JSONObject();
-                    responseToClient.put("status", "Invalid Request");
-                    sendResponse(exchange, 400, responseToClient.toString());
+                if (pathSegments.length == 3 && "user".equals(pathSegments[1])) {
+                    String userId = pathSegments[2];
+                    try {
+                        String targetUrl = ISCSURL + "/user/" + userId; 
+                        HttpClient client = HttpClient.newHttpClient();
+                        HttpRequest request = HttpRequest.newBuilder()
+                                .uri(URI.create(targetUrl))
+                                .GET() 
+                                .build();
+
+                        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                        byte[] responseBytes = response.body().getBytes(StandardCharsets.UTF_8);
+                        exchange.sendResponseHeaders(response.statusCode(), responseBytes.length);
+                        OutputStream os = exchange.getResponseBody();
+                        os.write(responseBytes);
+                        os.close();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        e.printStackTrace();
+                    } 
+                } else {
+                    String response = "Invalid Request";
+                    exchange.sendResponseHeaders(400, response.length());
+                    OutputStream os = exchange.getResponseBody();
+                    os.write(response.getBytes());
+                    os.close();
                 }
             }
         }
@@ -358,23 +364,42 @@ public class OrderService {
                         sendResponse(exchange, 400, responseToClient.toString());
                     }
                 } else {
-                    try {
-                        String[] pathSegments = exchange.getRequestURI().getPath().split("/");
-                        Integer id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
-                        int code = forwardGetRequest(userURL + "/" + id_int.toString());
-                        
-                        JSONObject responseToClient = new JSONObject();
-                        responseToClient.put("status", "Invalid Request");
+                    String path = exchange.getRequestURI().getPath();
+                    String[] pathSegments = path.split("/");
 
-                        sendResponse(exchange, code, "Success");
-                    } catch (IOException | InterruptedException e) {
-                        JSONObject responseToClient = new JSONObject();
-                        responseToClient.put("status", "Invalid Request");
-                        sendResponse(exchange, 400, responseToClient.toString());
-                    }
+                    if (pathSegments.length == 3 && "product".equals(pathSegments[1])) {
+                        String productId = pathSegments[2];
+                        
+                        try {
+                            String targetUrl = ISCSURL + "/product/" + productId; 
+                            HttpClient client = HttpClient.newHttpClient();
+                            HttpRequest request = HttpRequest.newBuilder()
+                                    .uri(URI.create(targetUrl))
+                                    .GET() 
+                                    .build();
+
+                            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                            byte[] responseBytes = response.body().getBytes(StandardCharsets.UTF_8);
+                            exchange.sendResponseHeaders(response.statusCode(), responseBytes.length);
+                            OutputStream os = exchange.getResponseBody();
+                            os.write(responseBytes);
+                            os.close();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            e.printStackTrace();
+                            } 
+                        } else {
+                            String response = "Invalid Request";
+                            exchange.sendResponseHeaders(400, response.length());
+                            OutputStream os = exchange.getResponseBody();
+                            os.write(response.getBytes());
+                            os.close();
+                        }
+                    } 
                 }
             }
-        }
+        
 
         static class UserPurchaseHandler implements HttpHandler {
             @Override
@@ -448,38 +473,7 @@ public class OrderService {
                 }
             }
         }
-
-    private static void createNewDatabase() {
-        File databaseFile = new File("db/OrderDatabase.db");
-        
-            // Check if the database file exists
-            if (databaseFile.exists()) {
-                // Delete the existing database file
-                if (databaseFile.delete()) {
-                    System.out.println("Existing database deleted successfully.");
-                } else {
-                    System.out.println("Failed to delete the existing database.");
-                }
-            }
-
-        try (Connection connection = DriverManager.getConnection(jdbcUrl2)) {
-            // Create Purchases table
-            String createPurchasesTableQuery = "CREATE TABLE IF NOT EXISTS orders ("
-                    + "orderId INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "userId INTEGER NOT NULL,"
-                    + "productId INTEGER NOT NULL,"
-                    + "quantity INTEGER NOT NULL)";
-            try (Statement statement = connection.createStatement()) {
-                    // Execute the query to create the Product table
-                    statement.executeUpdate(createPurchasesTableQuery);
-                    System.out.println("Product table created successfully in a new database.");
-            } catch (SQLException sqle) {
-                System.out.println("Error creating Product table: " + sqle.getMessage());
-            }
-        } catch (SQLException e) {
-            System.out.println("Error creating new database: " + e.getMessage());
-        }
-    }
+    
 
     private static void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
         exchange.sendResponseHeaders(statusCode, response.length());
@@ -564,26 +558,9 @@ public class OrderService {
         return response.toString();
     }
 
-    //GET forward
-    public static int forwardGetRequest(String targetURL) throws IOException, InterruptedException {
-        URL url = URI.create(targetURL).toURL();
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-        // Set the request method to GET
-        connection.setRequestMethod("GET");
-
-        // Get the response code
-        int responseCode = connection.getResponseCode();
-
-        connection.disconnect();
-        return responseCode;
-    }
-
-
     private static boolean doesProductIdExist(int productId) throws SQLException {
         String password = "password";
         String username = "postgres";
-        String host = "172.17.0.2";
         String port = "5432";
         String url = String.format("jdbc:postgresql://%s:%s/product", host, port);
         boolean exists = false;
@@ -605,7 +582,6 @@ public class OrderService {
     private static boolean doesUserIdExist(int userId) throws SQLException {
         String password = "password";
         String username = "postgres";
-        String host = "172.17.0.2";
         String port = "5432";
         String url = String.format("jdbc:postgresql://%s:%s/users", host, port);
 

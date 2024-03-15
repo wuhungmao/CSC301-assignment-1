@@ -40,8 +40,10 @@ public class ProductService {
     public static String username = "postgres";
     public static String host = "172.17.0.2";
     public static String port = "5432";
-    public static String url = "jdbc:postgresql://172.17.0.2:5432/product";
-    
+    //public static String url = "jdbc:postgresql://172.17.0.2:5432/product";
+    //DELETE THIS AFTER
+    public static String url = "jdbc:postgresql://localhost:5432/product";
+
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
@@ -127,6 +129,7 @@ public class ProductService {
                                 info.put("price", price_double);
                                 info.put("quantity", quantity);
                                 cache.put(id, info);
+                                System.out.println("update");
 
                                 // Continue with insertion
                                 String insertQuery = "INSERT INTO product (productId, productName, description, price, quantity) VALUES (?, ?, ?, ?, ?)";
