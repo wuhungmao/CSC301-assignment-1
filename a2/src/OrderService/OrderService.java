@@ -8,8 +8,6 @@ import java.io.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.Arrays;
-import java.util.List;
 
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
@@ -26,9 +24,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -39,8 +34,8 @@ import java.sql.Statement;
 //import JSONObject
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 /*
 Order Service:
 This must be written in Java
@@ -69,21 +64,17 @@ All communication from OrderService MUST go to ISCS which will route and load ba
 
 Note: this means that to place an order, you may have to first make a GET request, then an "update order" POST request.
  */
+
+ 
+
 public class OrderService {
     public static HttpServer server;
     public static ExecutorService httpThreadPool;
-    public static String password = "password";
-    public static String username = "postgres";
+    
+    private static HikariDataSource usersDataSource;
+    private static HikariDataSource productsDataSource;
+    private static HikariDataSource ordersDataSource;
     //public static String host = "172.17.0.2";
-    //DELETE THIS AFTER
-    public static String host = "127.0.0.1";
-    public static String port = "5432";
-    public static String jdbcUrl = String.format("jdbc:postgresql://%s:%s/users", host, port);
-    public static String jdbcP = String.format("jdbc:postgresql://%s:%s/product", host, port);
-    public static String jdbcUrl2 = String.format("jdbc:postgresql://%s:%s/orders", host, port);
-
-    private static final String ISCS_ENDPOINT = "http://127.0.0.0.1/forward";
-
     //Shutdown Signals
     public static int workRunning = 0;
     public static String userURL = "";
@@ -117,10 +108,11 @@ public class OrderService {
             productURL = "http://" + productServiceIP + ":" + productPort + "/product";
             userURL = "http://" + userServiceIP + ":" + userPort + "/user";
             ISCSURL = "http://" + ISCSip + ":" + ISCSport;
-
-
-            //System.out.println(productURL);
-            //System.out.println(userURL);
+            
+            //Change these ports later
+            usersDataSource = createDataSource("jdbc:postgresql://127.0.0.1:5432/users");
+            productsDataSource = createDataSource("jdbc:postgresql://127.0.0.1:5432/product");
+            ordersDataSource = createDataSource("jdbc:postgresql://127.0.0.1:5432/orders");
 
             // Extract IP address and port
             String ipAddress = orderServiceConfig.getString("ip");
@@ -133,7 +125,7 @@ public class OrderService {
             UserHandler newHandler2 = new UserHandler();
             UserPurchaseHandler newHandler3 = new UserPurchaseHandler();
             ProductHandler newHandler4 = new ProductHandler();
-            server.setExecutor(Executors.newFixedThreadPool(10)); 
+            server.setExecutor(Executors.newFixedThreadPool(50)); 
             
             server.createContext("/order", newHandler);
             server.createContext("/user", newHandler2);
@@ -182,7 +174,7 @@ public class OrderService {
                             }
 
                             //Make sure the JSON is of correct format with users id product id and qunatity
-                            Connection connection = DriverManager.getConnection(jdbcP, username, password);
+                            Connection connection = productsDataSource.getConnection();
                             String selectQuery = "SELECT * FROM product WHERE productId = ?";
                             PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                             preparedStatement.setInt(1, productId);
@@ -217,7 +209,7 @@ public class OrderService {
                                     // Update product database
                                     
                                     /* 
-                                    Connection connection2 = DriverManager.getConnection(jdbcUrl2, username, password);
+                                    Connection connection2 = ordersDataSource.getConnection();
                                     String insertQuery = "INSERT INTO orders (orderId, userId, productId, quantity) VALUES (?, ?, ?, ?)";
                                     try (PreparedStatement preparedStatementInsert = connection2.prepareStatement(insertQuery)) {
                                         preparedStatementInsert.setInt(2, userId);
@@ -419,14 +411,14 @@ public class OrderService {
                     int userId = Integer.parseInt(parts[3]);  
                     JSONObject responseJson = new JSONObject();
 
-                    try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
+                    try (Connection connection = usersDataSource.getConnection()) {
                         String checkUserQuery = "SELECT COUNT(*) AS count FROM users WHERE user_id = ?";
                         try (PreparedStatement stmt = connection.prepareStatement(checkUserQuery)) {
                             stmt.setInt(1, userId); 
                             ResultSet rs = stmt.executeQuery();
 
                             if (rs.next() && rs.getInt("count") > 0) {
-                                try (Connection connection2 = DriverManager.getConnection(jdbcUrl2, username, password)) {
+                                try (Connection connection2 = ordersDataSource.getConnection()) {
                                     String selectQuery = "SELECT productId, SUM(quantity) as quantity FROM orders WHERE userId = ? GROUP BY productId";
                                     try (PreparedStatement stmt2 = connection2.prepareStatement(selectQuery)) {
                                         stmt2.setInt(1, userId);
@@ -534,6 +526,16 @@ public class OrderService {
             Thread.currentThread().interrupt();
         }
 
+        if (usersDataSource != null && !usersDataSource.isClosed()) {
+            usersDataSource.close();
+        }
+        if (productsDataSource != null && !productsDataSource.isClosed()) {
+            productsDataSource.close();
+        }
+        if (ordersDataSource != null && !ordersDataSource.isClosed()) {
+            ordersDataSource.close();
+        }
+
         System.out.println("Server shut down.");
         System.exit(0); // Exit the application
     }
@@ -566,13 +568,9 @@ public class OrderService {
     }
 
     private static boolean doesProductIdExist(int productId) throws SQLException {
-        String password = "password";
-        String username = "postgres";
-        String port = "5432";
-        String url = String.format("jdbc:postgresql://%s:%s/product", host, port);
         boolean exists = false;
     
-        try (Connection connection = DriverManager.getConnection(url, username, password);
+        try (Connection connection = productsDataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(
                  "SELECT COUNT(*) FROM Product WHERE productId = ?")) {
             
@@ -587,13 +585,8 @@ public class OrderService {
     }
 
     private static boolean doesUserIdExist(int userId) throws SQLException {
-        String password = "password";
-        String username = "postgres";
-        String port = "5432";
-        String url = String.format("jdbc:postgresql://%s:%s/users", host, port);
-
         boolean exists = false;
-        try (Connection connection = DriverManager.getConnection(url, username, password);
+        try (Connection connection = usersDataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(
                  "SELECT COUNT(*) FROM users WHERE user_id = ?")) {
             
@@ -606,5 +599,18 @@ public class OrderService {
         }
         return exists;
     }
+    
+    private static HikariDataSource createDataSource(String jdbcUrl) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(jdbcUrl);
+        config.setUsername("postgres");
+        config.setPassword("password");
+        config.setMaximumPoolSize(25);
+        config.setMinimumIdle(5); 
+        config.setIdleTimeout(30000); 
+        config.setConnectionTimeout(30000);
+        config.setLeakDetectionThreshold(2000);
 
+        return new HikariDataSource(config);
+    }
 }

@@ -28,8 +28,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.sqlite.JDBC;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.security.MessageDigest;
@@ -217,7 +215,6 @@ public class ProductService {
                             JSONObject original_info = cache.get(id);
                             // Set values for each attribute
                             int parameterIndex = 1;
-                            System.out.println("flag4");
                             if (requestbody.has("name")) {
                                 String name = requestbody.getString("name");
                                 if(!name.isEmpty()){
@@ -230,7 +227,6 @@ public class ProductService {
                                 }
                             }
 
-                            System.out.println("flag3");
                             if (requestbody.has("description")) {
                                 String description = requestbody.getString("description");
                                 if(!description.isEmpty()){
@@ -266,7 +262,6 @@ public class ProductService {
                                     throw new IllegalArgumentException("quantity cannot be 0.");
                                 }
                             }
-                            System.out.println("flag40");
                             
                             // Set the productId for the WHERE clause
                             preparedStatement.setInt(parameterIndex, id_int);
@@ -278,7 +273,7 @@ public class ProductService {
                             
                             // Put in all information that needs to be sent to the client
                             JSONObject responseBody = createResponse(exchange, command, id_int);
-                            int statusCode = (rowsAffected > 0) ? 200 : 404; // 404 if no product found
+                            int statusCode = (rowsAffected > 0) ? 200 : 404; // 404 if no product fogitund
                             sendResponse(exchange, statusCode, responseBody.toString());
                             
                             if (rowsAffected > 0) {
