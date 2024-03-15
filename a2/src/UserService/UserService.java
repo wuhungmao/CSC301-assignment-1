@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 //import JSONObject
 import org.json.JSONObject;
 import org.json.JSONException;
+import org.json.JSONArray;
 
 //Database
 import java.sql.Connection;
@@ -93,13 +94,13 @@ public class UserService {
         String configFile = args[0];
         try {
             String configContent = new String(Files.readAllBytes(Paths.get(configFile)));
-
             JSONObject config = new JSONObject(configContent);
-            JSONObject userServiceConfig = config.getJSONObject("UserService");
+            JSONObject productServiceConfig = config.getJSONObject("ProductService");
 
-            // Extract IP address and port number
-            String ipAddress = userServiceConfig.getString("ip");
-            int port = userServiceConfig.getInt("port");
+            // Extract IP address
+            String ipAddress = productServiceConfig.getString("ip");
+            // Extract array of ports
+            JSONArray ports = productServiceConfig.getJSONArray("ports");
 
             HikariConfig configData = new HikariConfig();
             //public static String url = "jdbc:postgresql://172.17.0.2:5432/users";
@@ -113,16 +114,15 @@ public class UserService {
     
             dataSource = new HikariDataSource(configData);
 
-            /*For Http request*/
-            HttpServer userServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
-            // Example: Set a custom executor with a fixed-size thread pool
-            userServer.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
-            // Set up context for /test POST request
-            userServer.createContext("/user", new TestHandler());
-
-            userServer.start();
-
-            //System.out,or("users Server started on port " + port);
+            // Create and start an HttpServer for each port
+            for (int i = 0; i < ports.length(); i++) {
+                int port = ports.getInt(i);
+                HttpServer ProductServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+                ProductServer.setExecutor(Executors.newFixedThreadPool(10));
+                ProductServer.createContext("/product", new TestHandler());
+                ProductServer.start();
+                System.out.println("Product Server started on port " + port);
+            }
         } catch (IOException e) {
             System.err.println("Error reading the configuration file: " + e.getMessage());
         } catch (Exception e) {

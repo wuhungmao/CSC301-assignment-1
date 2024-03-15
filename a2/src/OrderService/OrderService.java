@@ -32,6 +32,7 @@ import java.sql.Statement;
 
 //import JSONObject
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -91,21 +92,12 @@ public class OrderService {
 
             JSONObject config = new JSONObject(configContent);
             JSONObject orderServiceConfig = config.getJSONObject("OrderService");
-            
-            JSONObject productServiceConfig = config.getJSONObject("ProductService");
-            String productServiceIP = productServiceConfig.getString("ip"); 
-            Integer productPort = productServiceConfig.getInt("port"); 
 
             JSONObject ISCSconfig = config.getJSONObject("InterServiceCommunication");
             String ISCSip = ISCSconfig.getString("ip"); 
             Integer ISCSport = ISCSconfig.getInt("port"); 
 
-            JSONObject userServiceConfig = config.getJSONObject("UserService");
-            String userServiceIP = userServiceConfig.getString("ip"); 
-            Integer userPort = userServiceConfig.getInt("port"); 
 
-            productURL = "http://" + productServiceIP + ":" + productPort + "/product";
-            userURL = "http://" + userServiceIP + ":" + userPort + "/user";
             ISCSURL = "http://" + ISCSip + ":" + ISCSport;
             
             //Change these ports later
@@ -324,6 +316,7 @@ public class OrderService {
                         byte[] responseBytes = response.body().getBytes(StandardCharsets.UTF_8);
                         exchange.sendResponseHeaders(response.statusCode(), responseBytes.length);
                         OutputStream os = exchange.getResponseBody();
+                        System.out.println("yeah");
                         os.write(responseBytes);
                         os.close();
                     } catch (InterruptedException e) {

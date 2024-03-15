@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="compiled">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/compiled/json-java.jar!/" />
+      <root url="jar://$PROJECT_DIR$/compiled/HikariCP-5.1.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/compiled/slf4j-api-1.7.36.jar!/" />
+      <root url="jar://$PROJECT_DIR$/compiled/postgresql-42.7.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/compiled/HikariCP-5.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

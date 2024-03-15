@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 //import JSONObject
 import org.json.JSONObject;
 import org.json.JSONException;
+import org.json.JSONArray;
 
 //Database
 import java.sql.Connection;
@@ -56,7 +57,7 @@ public class ProductService {
 
             // Extract IP address and port number
             String ipAddress = productServiceConfig.getString("ip");
-            int port = productServiceConfig.getInt("port");
+            JSONArray ports = productServiceConfig.getJSONArray("ports");
 
             HikariConfig configData = new HikariConfig();
             //public static String url = "jdbc:postgresql://172.17.0.2:5432/users";
@@ -68,16 +69,15 @@ public class ProductService {
             configData.setIdleTimeout(30000); 
             configData.setConnectionTimeout(30000); 
 
-            /*For Http request*/
-            HttpServer ProductServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
-            // Example: Set a custom executor with a fixed-size thread pool
-            ProductServer.setExecutor(Executors.newFixedThreadPool(10)); // Adjust the pool size as needed
-            // Set up context for /test POST request
-            ProductServer.createContext("/product", new TestHandler());
+            // Create and start an HttpServer for each port
+            for (int i = 0; i < ports.length(); i++) {
+                int port = ports.getInt(i);
+                HttpServer ProductServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
+                ProductServer.setExecutor(Executors.newFixedThreadPool(10));
+                ProductServer.createContext("/product", new TestHandler());
+                ProductServer.start();
+            }
 
-            ProductServer.start();
-
-            System.out.println("product Server started on port " + port);
         } catch (IOException e) {
             System.err.println("Error reading the configuration file: " + e.getMessage());
         } catch (Exception e) {

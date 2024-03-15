@@ -1,8 +1,6 @@
 
 import json
 import sys
-import os
-
 import requests
 
 ORDER_PATH = r"order_testcases.json"
