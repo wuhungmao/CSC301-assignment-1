@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
 
 //import JSONObject
 import org.json.JSONObject;
@@ -35,14 +36,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class ProductService {
-    public static Map<String, JSONObject> cache = new HashMap<>();//cache
+    public static Map<String, JSONObject> cache = new ConcurrentHashMap<>();//cache
     public static String password = "password";
     public static String username = "postgres";
     public static String host = "172.17.0.2";
     public static String port = "5432";
     //public static String url = "jdbc:postgresql://172.17.0.2:5432/product";
     //DELETE THIS AFTER
-    public static String url = "jdbc:postgresql://localhost:5432/product";
+    public static String url = "jdbc:postgresql://127.0.0.1:5432/product";
 
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
@@ -216,21 +217,27 @@ public class ProductService {
                             JSONObject original_info = cache.get(id);
                             // Set values for each attribute
                             int parameterIndex = 1;
+                            System.out.println("flag4");
                             if (requestbody.has("name")) {
                                 String name = requestbody.getString("name");
                                 if(!name.isEmpty()){
                                     preparedStatement.setString(parameterIndex++, name);
-                                    original_info.put("name", requestbody.getString("name"));
+                                    if (original_info != null) {
+                                        original_info.put("name", requestbody.getString("name"));
+                                    }
                                 } else {
                                     throw new IllegalArgumentException("name cannot be empty.");
                                 }
                             }
 
+                            System.out.println("flag3");
                             if (requestbody.has("description")) {
                                 String description = requestbody.getString("description");
                                 if(!description.isEmpty()){
                                     preparedStatement.setString(parameterIndex++, description);
-                                    original_info.put("description", requestbody.getString("description"));
+                                    if (original_info != null) {
+                                        original_info.put("description", requestbody.getString("description"));
+                                    }
                                 } else {
                                     throw new IllegalArgumentException("description cannot be empty.");
                                 }
@@ -240,7 +247,9 @@ public class ProductService {
                                 Double price = requestbody.getDouble("price");
                                 if(price > 0){
                                     preparedStatement.setDouble(parameterIndex++, price);
-                                    original_info.put("price", requestbody.getString("price"));
+                                    if (original_info != null) {
+                                        original_info.put("price", requestbody.getString("price"));
+                                    }
                                 } else {
                                     throw new IllegalArgumentException("price cannot be 0.");
                                 }
@@ -248,13 +257,16 @@ public class ProductService {
 
                             if (requestbody.has("quantity")) {
                                 int quantity = requestbody.getInt("quantity");
-                                if(quantity > 0){
+                                if(quantity >= 0){
                                     preparedStatement.setDouble(parameterIndex++, quantity);
-                                    original_info.put("quantity", requestbody.getString("quantity"));
+                                    if (original_info != null) {
+                                        original_info.put("quantity", requestbody.getString("quantity"));
+                                    }
                                 } else {
                                     throw new IllegalArgumentException("quantity cannot be 0.");
                                 }
                             }
+                            System.out.println("flag40");
                             
                             // Set the productId for the WHERE clause
                             preparedStatement.setInt(parameterIndex, id_int);
@@ -282,6 +294,7 @@ public class ProductService {
                             // System.out.println("missing id field exception");
 
                             //Missing id field
+                            System.out.println("missing updated successfully.");
                             JSONObject responseBody = new JSONObject();
                             // Put in all information that needs to be sent to the client
                             int statusCode = 400; 
@@ -295,6 +308,7 @@ public class ProductService {
                             // System.out.println("id is " + id_int);
                         // }
                         // System.out.println("sql exception");
+                        System.out.println("missing updated successfully.");
                         JSONObject responseBody = new JSONObject();
                         int statusCode = 400;
                         sendResponse(exchange, statusCode, responseBody.toString());

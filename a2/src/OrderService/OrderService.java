@@ -76,7 +76,7 @@ public class OrderService {
     public static String username = "postgres";
     //public static String host = "172.17.0.2";
     //DELETE THIS AFTER
-    public static String host = "localhost";
+    public static String host = "127.0.0.1";
     public static String port = "5432";
     public static String jdbcUrl = String.format("jdbc:postgresql://%s:%s/users", host, port);
     public static String jdbcP = String.format("jdbc:postgresql://%s:%s/product", host, port);
@@ -191,7 +191,11 @@ public class OrderService {
 
                             if (resultSet.next()) {
                                 int product_id = resultSet.getInt("productId");
+                                double price = resultSet.getDouble("price");
+                                String name = resultSet.getString("productname");
+                                String description = resultSet.getString("description");
                                 Integer quantity_database = resultSet.getInt("quantity");
+                                System.out.println("quantity is " + (quantity_database));
                                 orderId += 1;
 
                                 // Return 409 if the amount inside database is less than quantity asked
@@ -205,11 +209,14 @@ public class OrderService {
                                     //Create a post request to product server so that it can decrease number of product in database by quantity
                                     System.out.println("product_id is " + product_id);
                                     System.out.println("quantity is " + (quantity_database - quantity_wanted));
- 
-                                    String jsonBody = String.format("{\"command\": \"update\", \"product_id\": %d, \"quantity\": %d}", product_id, quantity_database - quantity_wanted);
+
+                                    Integer newQuant = quantity_database - quantity_wanted;
+                                    String jsonBody = String.format("{\"command\": \"update\", \"id\": %d, \"quantity\": %d, \"name\": \"%s\", \"price\": %.2f, \"description\": \"%s\"}", product_id, newQuant, name, price, description);
+
+                                    String response = sendPostRequest(ISCSURL + "/product", jsonBody);
                                     // Update product database
                                     
-                                    
+                                    /* 
                                     Connection connection2 = DriverManager.getConnection(jdbcUrl2, username, password);
                                     String insertQuery = "INSERT INTO orders (orderId, userId, productId, quantity) VALUES (?, ?, ?, ?)";
                                     try (PreparedStatement preparedStatementInsert = connection2.prepareStatement(insertQuery)) {
@@ -220,12 +227,13 @@ public class OrderService {
                                     } catch(SQLException e){
                                         System.out.println("ERROR");
                                     }
-                                    //try {
+                                    try {
                                         System.out.println("Skip, fix this later");
                                         //String response = sendPostRequest(ISCSURL + "/product", jsonBody);
-                                    //} catch (IOException e) {
-                                    //    e.printStackTrace();
-                                    //}
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                    */
 
                                     System.out.println("after creating product request");
                                     responseToClient
@@ -530,7 +538,6 @@ public class OrderService {
         System.exit(0); // Exit the application
     }
 
-    // Send POST Request to urlString with jsonInputString, return responses as string
     public static String sendPostRequest(String urlString, String jsonInputString) throws IOException {
         URL url = URI.create(urlString).toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();

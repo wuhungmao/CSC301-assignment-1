@@ -88,7 +88,7 @@ public class UserService {
     public static String port = "5432";
     //Delete this after
     //public static String url = "jdbc:postgresql://172.17.0.2:5432/users";
-    public static String url = "jdbc:postgresql://localhost:5432/users";
+    public static String url = "jdbc:postgresql://127.0.0.1:5432/users";
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
         // Read the JSON configuration file
