@@ -101,9 +101,9 @@ public class OrderService {
             ISCSURL = "http://" + ISCSip + ":" + ISCSport;
             
             //Change these ports later
-            usersDataSource = createDataSource("jdbc:postgresql://127.0.0.1:5432/users");
-            productsDataSource = createDataSource("jdbc:postgresql://127.0.0.1:5432/product");
-            ordersDataSource = createDataSource("jdbc:postgresql://127.0.0.1:5432/orders");
+            usersDataSource = createDataSource("jdbc:postgresql://172.17.0.2:5432/users");
+            productsDataSource = createDataSource("jdbc:postgresql://172.17.0.2:5432/product");
+            ordersDataSource = createDataSource("jdbc:postgresql://172.17.0.2:5432/orders");
 
             // Extract IP address and port
             String ipAddress = orderServiceConfig.getString("ip");

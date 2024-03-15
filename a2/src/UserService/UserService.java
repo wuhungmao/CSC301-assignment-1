@@ -104,7 +104,7 @@ public class UserService {
 
             HikariConfig configData = new HikariConfig();
             //public static String url = "jdbc:postgresql://172.17.0.2:5432/users";
-            configData.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/users");
+            configData.setJdbcUrl("jdbc:postgresql://172.17.0.2:5432/users");
             configData.setUsername("postgres");
             configData.setPassword("password");
             configData.setMaximumPoolSize(100); 
