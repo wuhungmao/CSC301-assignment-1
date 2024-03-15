@@ -33,15 +33,14 @@ import java.util.regex.Pattern;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 public class ProductService {
     public static Map<String, JSONObject> cache = new ConcurrentHashMap<>();//cache
-    public static String password = "password";
-    public static String username = "postgres";
-    public static String host = "172.17.0.2";
-    public static String port = "5432";
+    private static HikariDataSource dataSource;
     //public static String url = "jdbc:postgresql://172.17.0.2:5432/product";
     //DELETE THIS AFTER
-    public static String url = "jdbc:postgresql://127.0.0.1:5432/product";
 
     private static int requestCount = 0;
     public static void main(String[] args) throws IOException, SQLException {
@@ -58,6 +57,16 @@ public class ProductService {
             // Extract IP address and port number
             String ipAddress = productServiceConfig.getString("ip");
             int port = productServiceConfig.getInt("port");
+
+            HikariConfig configData = new HikariConfig();
+            //public static String url = "jdbc:postgresql://172.17.0.2:5432/users";
+            configData.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/product");
+            configData.setUsername("postgres");
+            configData.setPassword("password");
+            configData.setMaximumPoolSize(100); 
+            configData.setMinimumIdle(10); 
+            configData.setIdleTimeout(30000); 
+            configData.setConnectionTimeout(30000); 
 
             /*For Http request*/
             HttpServer ProductServer = HttpServer.create(new InetSocketAddress(ipAddress, port), 0);
@@ -90,7 +99,7 @@ public class ProductService {
                 }
                 if (command.equals("create")) {
                     // Check if this is the first request
-                    try  (Connection connection = DriverManager.getConnection(url, username, password)){
+                    try  (Connection connection = dataSource.getConnection()){
                         // Get body parameters
                         if(requestbody.has("id") && requestbody.has("name") && requestbody.has("description") && requestbody.has("price") && requestbody.has("quantity")) {
                             int id_int = requestbody.getInt("id");
@@ -180,7 +189,7 @@ public class ProductService {
                 } else if (command.equals("update")) {
                     /* update product */
                     System.out.println("got the request in update");
-                    try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                    try (Connection connection = dataSource.getConnection()) {
                         if(requestbody.has("id")) {
                             // Get body parameters
                             int id_int = requestbody.getInt("id");
@@ -321,7 +330,7 @@ public class ProductService {
                         sendResponse(exchange, statusCode, responseBody.toString());
                     }
                 } else if (command.equals("delete")) {
-                    try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                    try (Connection connection = dataSource.getConnection()) {
                         if(!requestbody.has("id")) {
                             // int id_int = requestbody.getInt("id");
                             Object id = requestbody.get("id");
@@ -441,7 +450,7 @@ public class ProductService {
                     System.out.println("Creating new database");
                     createNewDatabase();
                 }
-                try (Connection connection = DriverManager.getConnection(url, username, password)){
+                try (Connection connection = dataSource.getConnection()){
                     String[] pathSegments = exchange.getRequestURI().getPath().split("/");
 
                     int id_int = Integer.parseInt(pathSegments[pathSegments.length - 1]);
@@ -500,7 +509,7 @@ public class ProductService {
 
         private static JSONObject createResponse(HttpExchange exchange, String command, Integer id_int) {
             if ("GET".equals(exchange.getRequestMethod())) {
-                try (Connection connection = DriverManager.getConnection(url, username, password)) {    
+                try (Connection connection = dataSource.getConnection()) {    
                     String selectQuery = "SELECT * FROM product WHERE productId = ?";
                     PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                     preparedStatement.setInt(1, id_int);
@@ -543,7 +552,7 @@ public class ProductService {
 
             } else if ("POST".equals(exchange.getRequestMethod())) {
                 if (!command.equals("delete")) {
-                    try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                    try (Connection connection = dataSource.getConnection()) {
                         String selectQuery = "SELECT * FROM product WHERE productId = ?";
                         PreparedStatement preparedStatement = connection.prepareStatement(selectQuery);
                         preparedStatement.setInt(1, id_int);
@@ -628,7 +637,7 @@ public class ProductService {
                     System.out.println("Failed to delete the existing database.");
                 }
             }
-            try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            try (Connection connection = dataSource.getConnection()) {
                 // Create the product table in the new database
                 String createTableQuery = "CREATE TABLE IF NOT EXISTS product ("
                         + "productId INTEGER PRIMARY KEY,"

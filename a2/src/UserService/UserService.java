@@ -106,8 +106,8 @@ public class UserService {
             configData.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/users");
             configData.setUsername("postgres");
             configData.setPassword("password");
-            configData.setMaximumPoolSize(25); 
-            configData.setMinimumIdle(5); 
+            configData.setMaximumPoolSize(100); 
+            configData.setMinimumIdle(10); 
             configData.setIdleTimeout(30000); 
             configData.setConnectionTimeout(30000); 
     

@@ -7,7 +7,6 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
@@ -125,7 +124,7 @@ public class OrderService {
             UserHandler newHandler2 = new UserHandler();
             UserPurchaseHandler newHandler3 = new UserPurchaseHandler();
             ProductHandler newHandler4 = new ProductHandler();
-            server.setExecutor(Executors.newFixedThreadPool(50)); 
+            server.setExecutor(Executors.newFixedThreadPool(10)); 
             
             server.createContext("/order", newHandler);
             server.createContext("/user", newHandler2);
@@ -517,14 +516,6 @@ public class OrderService {
         server.removeContext("/");
         server.stop(0);
         httpThreadPool.shutdown();
-        try {
-            if (!httpThreadPool.awaitTermination(60, TimeUnit.SECONDS)) {
-                httpThreadPool.shutdownNow();
-            }
-        } catch (InterruptedException ex) {
-            httpThreadPool.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
 
         if (usersDataSource != null && !usersDataSource.isClosed()) {
             usersDataSource.close();
@@ -605,8 +596,8 @@ public class OrderService {
         config.setJdbcUrl(jdbcUrl);
         config.setUsername("postgres");
         config.setPassword("password");
-        config.setMaximumPoolSize(25);
-        config.setMinimumIdle(5); 
+        config.setMaximumPoolSize(100);
+        config.setMinimumIdle(10); 
         config.setIdleTimeout(30000); 
         config.setConnectionTimeout(30000);
         config.setLeakDetectionThreshold(2000);
