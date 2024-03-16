@@ -66,10 +66,11 @@ case "$1" in
 
     javac -classpath "./compiled/*" -d ./compiled src/UserService/UserService.java
     javac -classpath "./compiled/*" -d ./compiled src/ProductService/ProductService.java
-    pip3 install Flask
-    # Compile OrderService.java (Adjust the path accordingly)
-    #javac -cp "$classpath" src/OrderService.java
     javac -classpath "./compiled/*" -d ./compiled src/OrderService/OrderService.java
+
+    python3 -m venv a2
+    source a2/bin/activate
+    pip install ~/a2/flask_file.whl
     ;;
   -u)
     # Start User service
